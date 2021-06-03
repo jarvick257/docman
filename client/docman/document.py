@@ -9,23 +9,27 @@ class Document:
     def __init__(self):
         self.scans = []
         self.tags = []
+        self._id = None
         self.ocr = None
         self.pdf = None
         self.date = None
         self.post = None
         self.title = None
+        self.wd = None
 
     @classmethod
-    def load(cls):
+    def load(cls, meta=None):
         config = get_config()
         wd = config["DEFAULT"]["working_dir"]
         meta_path = os.path.join(wd, "meta.json")
-        try:
-            with open(meta_path) as fp:
-                meta = json.load(fp)
-        except FileNotFoundError:
-            meta = {}
+        if meta is None:
+            try:
+                with open(meta_path) as fp:
+                    meta = json.load(fp)
+            except FileNotFoundError:
+                meta = {}
         doc = Document()
+        doc._id = meta.get("_id", None)
         doc.scans = meta.get("scans", [])
         doc.tags = meta.get("tags", [])
         doc.ocr = meta.get("ocr", None)
@@ -55,6 +59,7 @@ class Document:
 
     def to_dict(self):
         return dict(
+            _id=self._id,
             scans=self.scans,
             tags=self.tags,
             ocr=self.ocr,

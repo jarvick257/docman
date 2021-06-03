@@ -29,6 +29,10 @@ def _run(args):
         d["ocr"] = ocr_str
         print(json.dumps(d, indent=2))
     else:
+        if doc._id is None:
+            print("Id:    None (New document)")
+        else:
+            print(f"Id:    {doc._id}")
         print(f"Title: {doc.title}")
         print(f"Date:  {doc.date}")
         print(f"Tags:  {'None' if doc.tags == [] else ' '.join(doc.tags)}")
