@@ -57,9 +57,11 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
 def db_add(post: dict, pdf, scans: list):
     # existing _id means replace doc -> delte and create new with given id
     if "_id" in post:
-        txt, code = db_delete(ObjectId(post["_id"]))
+        post["_id"] = ObjectId(post["_id"])
+        txt, code = db_delete(post["_id"])
         if code != 200:
             return txt, code
+
     # fromisoformat only available in python3.7
     # post["date"] = datetime.fromisoformat(post["date"])
     post["date"] = datetime.strptime(post["date"], "%Y-%m-%d")
@@ -102,7 +104,7 @@ def db_delete(_id: ObjectId):
         collection = _connect_db()
     except:
         return "Failed to connect to database", 500
-    doc = collection.findOne(query)
+    doc = collection.find_one(query)
     if doc == {}:
         return f"No such document {_id}", 404
     # delete files
