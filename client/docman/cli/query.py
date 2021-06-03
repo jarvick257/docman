@@ -72,7 +72,6 @@ def _args_to_query(args):
         query["tags"] = args.tags.strip().lower().split(",")
     if args.text is not None:
         query["text"] = args.text.strip()
-    print(query)
     return query
 
 
