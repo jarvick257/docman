@@ -10,3 +10,4 @@ from .date import date
 from .ocr import ocr
 from .push import push
 from .query import query
+from .checkout import checkout
