@@ -55,14 +55,22 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
 
 
 def db_add(post: dict, pdf, scans: list):
-    # fromisoformat only available in python3.0
+    # existing _id means replace doc -> delte and create new with given id
+    if "_id" in post:
+        txt, code = db_delete(ObjectId(post["_id"]))
+        if code != 200:
+            return txt, code
+    # fromisoformat only available in python3.7
     # post["date"] = datetime.fromisoformat(post["date"])
     post["date"] = datetime.strptime(post["date"], "%Y-%m-%d")
     date_str = post["date"].strftime("%Y%m%d")
 
     # Save PDF
     pdf_file = f"{date_str}-{post['title']}.pdf"
-    pdf.save(os.path.join(archive(), pdf_file))
+    pdf_path = os.path.join(archive(), pdf_file)
+    if os.path.isfile(pdf_path):
+        return "Document already exists!", 409
+    pdf.save(pdf_path)
     post["pdf"] = pdf_file
 
     # Save scans
@@ -73,7 +81,10 @@ def db_add(post: dict, pdf, scans: list):
     for i, scan in enumerate(scans):
         fmt = "jpg" if "." not in scan.filename else scan.filename.split(".")[-1]
         scan_file = f"{date_str}-{post['title']}-{i:02d}.{fmt}"
-        scan.save(os.path.join(scan_path, scan_file))
+        scan_path = os.path.join(scan_path, scan_file)
+        if os.path.isfile(scan_path):
+            return "Document already exists!", 409
+        scan.save(scan_path)
         post["scans"].append(scan_file)
 
     # Register db
@@ -83,6 +94,24 @@ def db_add(post: dict, pdf, scans: list):
     except:
         return "Failed to add document to database", 500
     return "OK", 201
+
+
+def db_delete(_id: ObjectId):
+    query = dict(_id=_id)
+    try:
+        collection = _connect_db()
+    except:
+        return "Failed to connect to database", 500
+    doc = collection.findOne(query)
+    if doc == {}:
+        return f"No such document {_id}", 404
+    # delete files
+    os.remove(os.path.join(archive(), doc["pdf"]))
+    for scan in doc["scans"]:
+        os.remove(os.path.join(archive(), ".scans", scan))
+    # delte db entry
+    collection.delete_one(query)
+    return "OK", 200
 
 
 def _create_thumbnail(pdf_path: str, thumb_path: str):
