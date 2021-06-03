@@ -165,11 +165,13 @@ def on_upload():
 @server.route("/query", methods=["GET"])
 def on_query():
     query = request.get_json()
-    tags = query.get("tags", None)
-    text = query.get("text", None)
-    start_date = query.get("start_date", None)
-    end_date = query.get("end_date", None)
-    matches = db_lookup(tags, text, start_date, end_date)
+    matches = db_lookup(
+        _id=query.get("id", None),
+        tags=query.get("tags", None),
+        text=query.get("text", None),
+        date_from=query.get("date_from", None),
+        date_until=query.get("date_until", None),
+    )
     if query.get("n_results", -1) > 0:
         # limit matches to first n_results keys
         keys = list(matches.keys())[: int(query["n_results"])]

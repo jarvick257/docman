@@ -2,6 +2,7 @@ import re
 import os
 from datetime import datetime
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 import fitz
 import io
 from PIL import Image
@@ -24,9 +25,11 @@ def archive():
     return os.environ.get("DOCMAN_ARCHIVE", "/data")
 
 
-def db_lookup(tags=None, text=None, date_from=None, date_to=None, _id=None):
+def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
     collection = _connect_db()
     query = {}
+    if _id:
+        query["_id"] = ObjectId(_id)
     if tags:
         query["tags"] = {"$all": tags}
     if date_from:
@@ -35,12 +38,12 @@ def db_lookup(tags=None, text=None, date_from=None, date_to=None, _id=None):
         if isinstance(date_from, str):
             date_from = datetime.strptime(date_from, "%Y-%m-%d")
         query["date"]["$gte"] = date_from
-    if date_to:
+    if date_until:
         if "date" not in query:
             query["date"] = {}
-        if isinstance(date_to, str):
-            date_to = datetime.strptime(date_to, "%Y-%m-%d")
-        query["date"]["$lte"] = date_to
+        if isinstance(date_until, str):
+            date_until = datetime.strptime(date_until, "%Y-%m-%d")
+        query["date"]["$lte"] = date_until
     if text:
         query["ocr"] = {"$regex": re.compile(".*" + text + ".*", re.IGNORECASE)}
     result = {str(result["_id"]): result for result in collection.find(query)}

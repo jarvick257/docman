@@ -11,5 +11,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY ./src /usr/src/app
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+ENV PYTHONUNBUFFERED=0
 
 ENTRYPOINT ["entrypoint.sh"]
