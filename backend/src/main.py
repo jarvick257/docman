@@ -145,7 +145,7 @@ def serve_scan(image):
 @server.route("/pdf/<document>")
 def serve_pdf(document):
     if not os.path.isfile(os.path.join(archive(), document)):
-        return "Documnet not found!", 404
+        return "Document not found!", 404
     return send_from_directory(archive(), document)
 
 
