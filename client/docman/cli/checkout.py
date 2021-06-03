@@ -50,4 +50,7 @@ def _run(args):
     bar.next()
     bar.finish()
     doc = Document.load(meta)
+    # fix paths
+    doc.pdf = os.path.join(doc.wd, "combined.pdf")
+    doc.scans = [os.path.join(doc.wd, scan) for scan in doc.scans]
     doc.save()

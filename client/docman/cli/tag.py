@@ -22,10 +22,6 @@ def tag(subparser):
 def _run(args):
     from docman import Document
 
-    if main_args == []:
-        parser.print_help()
-        exit(1)
-
     doc = Document.load()
     doctags = set(doc.tags)
     if args.clear:
