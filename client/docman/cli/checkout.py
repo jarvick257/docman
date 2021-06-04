@@ -17,7 +17,7 @@ def _run(args):
     import requests
     import urllib.request
     from docman import Document
-    from docman.utils import get_config
+    from docman.utils import get_server_url
     from progress.bar import Bar
 
     doc = Document.load()
@@ -31,8 +31,7 @@ def _run(args):
         sys.exit(1)
 
     # get document info
-    config = get_config()
-    url = f"http://{config['SERVER']['address']}:{config['SERVER']['port']}"
+    url = get_server_url()
     response = requests.get(f"{url}/query", json=dict(id=args.id))
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
@@ -41,16 +40,16 @@ def _run(args):
     files = [(f"{url}/pdf/{meta['pdf']}", "combined.pdf")]
     for scan in meta["scans"]:
         files.append((f"{url}/scan/{scan}", scan))
-    print(json.dumps(meta, indent=2))
 
-    bar = Bar("Checking out files", max=len(files))
-    for i, (url, path) in enumerate(files):
-        bar.next(i)
-        urllib.request.urlretrieve(url, filename=os.path.join(doc.wd, path))
-    bar.next()
-    bar.finish()
+    # Create document
     doc = Document.load(meta)
     # fix paths
     doc.pdf = os.path.join(doc.wd, "combined.pdf")
     doc.scans = [os.path.join(doc.wd, scan) for scan in doc.scans]
     doc.save()
+    # Download files
+    bar = Bar("Checking out files", max=len(files))
+    for i, (url, path) in enumerate(files):
+        bar.next()
+        urllib.request.urlretrieve(url, filename=os.path.join(doc.wd, path))
+    bar.finish()

@@ -29,11 +29,10 @@ def _run(args):
     import sys
     import requests
     import urllib.request
-    from docman.utils import get_config
+    from docman.utils import get_server_url
 
     # get document info
-    config = get_config()
-    url = f"http://{config['SERVER']['address']}:{config['SERVER']['port']}"
+    url = get_server_url()
     response = requests.get(f"{url}/query", json=dict(id=args.id))
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")

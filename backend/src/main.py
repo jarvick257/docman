@@ -11,7 +11,7 @@ from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
 from layout import layout, update_preview_grid, show_document
-from utils import db_lookup, db_add, archive, get_thumbnail
+from utils import db_lookup, db_add, db_delete, archive, get_thumbnail
 
 server = Flask("Docman")
 server.config["MAX_CONTENT_LENGTH"] = 128 * 1024 * 1024  # 128 MB
@@ -168,6 +168,16 @@ def on_upload():
         os.remove(post_path)
         return "Errors in submitted post file", 400
     return db_add(post, pdf, scans)
+
+
+@server.route("/remove", methods=["POST"])
+def on_remove():
+    query = request.get_json()
+    for _id in query["ids"]:
+        txt, code = db_delete(_id)
+        if code != 201:
+            return txt, code
+    return "OK", 201
 
 
 @server.route("/query", methods=["GET"])

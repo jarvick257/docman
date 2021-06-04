@@ -69,13 +69,15 @@ def _run(args):
     port = doc.config["SERVER"]["port"]
     try:
         r = requests.post(f"http://{ip}:{port}/add", files=files)
-        if r.status_code == 201:
-            # need an object with "hard" property set to True
-            fake_args = namedtuple("Args", "hard")(True)
-            reset(fake_args)
-            print("Push successful")
-        else:
-            print(f"Push failed with code {r.status_code}: {r.text}")
     except:
-        print(f"Push failed!")
+        print(f"Failed to connect to server!")
         raise
+    if r.status_code == 201:
+        # need an object with "hard" property set to True
+        fake_args = namedtuple("Args", "hard")(True)
+        reset(fake_args)
+        print("Push successful")
+        exit(0)
+    else:
+        print(f"Push failed with code {r.status_code}: {r.text}")
+        exit(1)

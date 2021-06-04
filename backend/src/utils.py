@@ -1,5 +1,6 @@
 import re
 import os
+from loguru import logger
 from datetime import datetime
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -50,17 +51,21 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
     for post in result.values():
         post["_id"] = str(post["_id"])
         post["date"] = str(post["date"].date())
-    print("Query:", query)
+    logger.debug(f"Query: {query}")
     return result
 
 
 def db_add(post: dict, pdf, scans: list):
     # existing _id means replace doc -> delte and create new with given id
     if "_id" in post:
-        post["_id"] = ObjectId(post["_id"])
+        logger.info(f"Replacing document {post['title']}")
         txt, code = db_delete(post["_id"])
-        if code != 200:
+        post["_id"] = ObjectId(post["_id"])
+        if code != 201:
+            logger.error("Can't replace because failed to delete old document")
             return txt, code
+    else:
+        logger.info(f"Adding new document: {post['title']}")
 
     # fromisoformat only available in python3.7
     # post["date"] = datetime.fromisoformat(post["date"])
@@ -71,20 +76,22 @@ def db_add(post: dict, pdf, scans: list):
     pdf_file = f"{date_str}-{post['title']}.pdf"
     pdf_path = os.path.join(archive(), pdf_file)
     if os.path.isfile(pdf_path):
+        logger.error(f"Can't add pdf {pdf_path} because it already exists!")
         return "Document already exists!", 409
     pdf.save(pdf_path)
     post["pdf"] = pdf_file
 
     # Save scans
-    scan_path = os.path.join(archive(), ".scans")
-    if not os.path.isdir(scan_path):
-        os.mkdir(scan_path)
+    scan_dir = os.path.join(archive(), ".scans")
+    if not os.path.isdir(scan_dir):
+        os.mkdir(scan_dir)
     post["scans"] = []
     for i, scan in enumerate(scans):
         fmt = "jpg" if "." not in scan.filename else scan.filename.split(".")[-1]
         scan_file = f"{date_str}-{post['title']}-{i:02d}.{fmt}"
-        scan_path = os.path.join(scan_path, scan_file)
+        scan_path = os.path.join(scan_dir, scan_file)
         if os.path.isfile(scan_path):
+            logger.error(f"Can't add scan {scan_path} becuase it already exists!")
             return "Document already exists!", 409
         scan.save(scan_path)
         post["scans"].append(scan_file)
@@ -98,14 +105,18 @@ def db_add(post: dict, pdf, scans: list):
     return "OK", 201
 
 
-def db_delete(_id: ObjectId):
+def db_delete(_id_str: str):
+    logger.info(f"Deleting {_id_str}")
+    _id = ObjectId(_id_str)
     query = dict(_id=_id)
     try:
         collection = _connect_db()
     except:
+        logger.error("Failed to connect to database")
         return "Failed to connect to database", 500
     doc = collection.find_one(query)
-    if doc == {}:
+    if doc is None or doc == {}:
+        logger.error("Document doesn't exist")
         return f"No such document {_id}", 404
     # delete files
     os.remove(os.path.join(archive(), doc["pdf"]))
@@ -113,7 +124,7 @@ def db_delete(_id: ObjectId):
         os.remove(os.path.join(archive(), ".scans", scan))
     # delte db entry
     collection.delete_one(query)
-    return "OK", 200
+    return "OK", 201
 
 
 def _create_thumbnail(pdf_path: str, thumb_path: str):
@@ -124,17 +135,17 @@ def _create_thumbnail(pdf_path: str, thumb_path: str):
     image = Image.open(io.BytesIO(image_data["image"]))
     image.thumbnail((400, 400), Image.ANTIALIAS)
     image.save(thumb_path)
-    print(f"Created {thumb_path} with size {image.size}")
+    logger.debug(f"Created {thumb_path} with size {image.size}")
 
 
 def get_thumbnail(thumb_name: str):
     thumb_dir = os.path.join(archive(), ".thumbs")
     thumb_path = os.path.join(thumb_dir, thumb_name)
     if not os.path.isfile(thumb_path):
-        print(f"{thumb_path} doesn't exist")
+        logger.debug(f"{thumb_path} doesn't exist")
         if not os.path.isdir(thumb_dir):
             os.mkdir(thumb_dir)
         pdf_name = thumb_name.rsplit(".", 1)[0] + ".pdf"
-        print(f"Creating {thumb_name} from {pdf_name}")
+        logger.debug(f"Creating {thumb_name} from {pdf_name}")
         _create_thumbnail(os.path.join(archive(), pdf_name), thumb_path)
     return thumb_dir, thumb_name
