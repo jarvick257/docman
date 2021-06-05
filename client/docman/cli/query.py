@@ -57,6 +57,8 @@ def query(subparser):
 
 
 def _args_to_query(args):
+    import datetime as dt
+
     query = {}
     try:
         if args.date_from is not None:
@@ -101,10 +103,8 @@ def _print_results(args, response):
 
 
 def _run(args):
-    import sys
     import requests
     import docman.utils
-    import datetime as dt
 
     # Get query
     query = _args_to_query(args)
@@ -118,7 +118,7 @@ def _run(args):
     if response.status_code != 200:
         print(f"Failed to connect to backend! (code {response.status_code})")
         print(response.text)
-        sys.exit(1)
+        exit(1)
 
     # Print
     _print_results(args, response)
