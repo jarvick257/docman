@@ -62,9 +62,15 @@ def _args_to_query(args):
     query = {}
     try:
         if args.date_from is not None:
-            query["date_from"] = dt.date.fromisoformat(args.date_from)
+            # query["date_from"] = dt.date.fromisoformat(args.date_from)
+            query["date_from"] = dt.datetime.strptime(
+                query["date_from"], "%Y-%m-%d"
+            ).date()
         if args.date_until is not None:
-            query["date_until"] = dt.date.fromisoformat(args.date_until)
+            # query["date_until"] = dt.date.fromisoformat(args.date_until)
+            query["date_until"] = dt.datetime.strptime(
+                query["date_until"], "%Y-%m-%d"
+            ).date()
     except ValueError:
         print("Date must be in YYYY-MM-DD format.")
         exit(1)
