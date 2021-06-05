@@ -7,7 +7,7 @@ Docman Document Management System
 - [X] docman pull: download specific files directly
 - [ ] docman stash: save/load working state locally
 - [X] docman rm: delete documents on server
-- [ ] docman edit: edit meta elements only without down-/uploading files
+- [X] docman edit: edit meta elements only without down-/uploading files
 - [ ] unit tests
 
 ## Server Side
