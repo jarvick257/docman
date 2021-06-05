@@ -65,11 +65,10 @@ def _run(args):
 
     bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
     for i in range(len(doc.scans)):
-        bar.next(i)
+        bar.next()
         words = result_q.get()
         for word in words:
             text.add(word.strip())
-    bar.next()
     bar.finish()
     [worker.join() for worker in workers]
 
