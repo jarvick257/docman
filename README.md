@@ -1,5 +1,5 @@
 # docman
-Docman Document Management System
+Docman - a scriptable, git inspired document management system featuring document tags, full text search and a web-based front end for searching the database.
 
 # TODO
 ## Client Side
@@ -7,7 +7,7 @@ Docman Document Management System
 - [X] docman pull: download specific files directly
 - [ ] docman stash: save/load working state locally
 - [X] docman rm: delete documents on server
-- [X] docman edit: edit meta elements only without down-/uploading files
+- [X] docman mode: edit meta elements only without down-/uploading files
 - [ ] unit tests
 
 ## Server Side
