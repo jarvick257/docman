@@ -25,17 +25,20 @@ def _run(args):
         ocr_str = f"{ocr_words} words"
 
     if args.json:
+        # dump dict and we're done
         d = doc.to_dict()
         d["ocr"] = ocr_str
         print(json.dumps(d, indent=2))
+        exit(0)
+
+    if doc.mode == "add":
+        mode = doc.mode
     else:
-        if doc._id is None:
-            print("Id:    None (New document)")
-        else:
-            print(f"Id:    {doc._id}")
-        print(f"Title: {doc.title}")
-        print(f"Date:  {doc.date}")
-        print(f"Tags:  {'None' if doc.tags == [] else ' '.join(doc.tags)}")
-        print(f"Scans: {len(doc.scans)}")
-        print(f"Ocr:   {ocr_str}")
-        print(f"Pdf:   {'Yes' if doc.pdf else 'No'}")
+        mode = f"{doc.mode} {doc._id}"
+    print(f"Mode:  {mode}")
+    print(f"Title: {doc.title}")
+    print(f"Date:  {doc.date}")
+    print(f"Tags:  {'None' if doc.tags == [] else ' '.join(doc.tags)}")
+    print(f"Scans: {len(doc.scans)}")
+    print(f"Ocr:   {ocr_str}")
+    print(f"Pdf:   {'Yes' if doc.pdf else 'No'}")

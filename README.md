@@ -8,9 +8,9 @@ Docman Document Management System
 - [ ] docman stash: save/load working state locally
 - [X] docman rm: delete documents on server
 - [ ] docman edit: edit meta elements only without down-/uploading files
+- [ ] unit tests
 
 ## Server Side
 - [ ] housekeeping: clean up orphaned documents (and all thumbs?) periodically (eg once a day) or at service start
 - [ ] periodic backups: sync documents with remote server periodically
-
-
+- [ ] unit tests

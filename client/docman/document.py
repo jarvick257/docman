@@ -9,6 +9,7 @@ class Document:
     def __init__(self):
         self.scans = []
         self.tags = []
+        self.mode = None
         self._id = None
         self.ocr = None
         self.pdf = None
@@ -36,6 +37,7 @@ class Document:
         doc.pdf = meta.get("pdf", None)
         doc.title = meta.get("title", None)
         doc.date = meta.get("date", str(dt.date.today()))
+        doc.mode = meta.get("mode", "add")
         doc.wd = wd
         doc.config = config
         doc.path = meta_path
@@ -59,6 +61,7 @@ class Document:
 
     def to_dict(self):
         return dict(
+            mode=self.mode,
             _id=self._id,
             scans=self.scans,
             tags=self.tags,

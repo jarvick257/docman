@@ -17,18 +17,10 @@ def push(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
-    import os
-    import requests
-    import json
-    from collections import namedtuple
-
-    from docman import Document
+def _prepare_full(doc):
     from .ocr import _run as ocr
     from .pdf import _run as pdf
-    from .reset import _run as reset
 
-    doc = Document.load()
     if doc.scans == [] or doc.tags == [] or doc.title is None:
         print("Document is not ready to be pushed!")
         print("Make sure you have at least one scan, one ore more tags and a title.")
@@ -40,38 +32,68 @@ def _run(args):
     if not doc.pdf:
         pdf(None)
         doc = Document.load()
+    return doc
 
-    if args.replace and args.add:
-        print("--replace and --add option are mutually exclusive!")
+
+def _prepare_update(doc):
+    if (
+        doc._id is None
+        or doc.tags == []
+        or doc.title is None
+        or doc.date is None
+        or doc.ocr is None
+    ):
+        print("Document is not ready to be pushed!")
+        print("Required attributes: id, tags, title, date, ocr")
         exit(1)
-    if doc._id is not None and not args.replace and not args.add:
-        print("Either --replace or --add are required when pushing after checkout!")
-        print("Run 'docman push --help' to learn more.")
+    return doc
+
+
+def _run(args):
+    import os
+    import requests
+    import json
+    from collections import namedtuple
+
+    from docman import Document
+    from docman.utils import get_server_url
+
+    from .reset import _run as reset
+
+    doc = Document.load()
+
+    # Check for if ready to be pushed
+    if doc.mode == "add" or doc.mode == "replace":
+        doc = _prepare_full(doc)
+    elif doc.mode == "update":
+        doc = _prepare_update(doc)
+    else:
+        print(f"Unrecognized mode: {mode}")
         exit(1)
 
-    # Prepare database post
-    post = doc.to_dict()
-    del post["pdf"]
-    del post["scans"]
-    if "_id" in post and args.add:
-        # by deleting the id, the document will be treated as new
-        del post["_id"]
-    doc.post = os.path.join(doc.wd, "post.json")
-    with open(doc.post, "w") as fp:
-        json.dump(post, fp)
-    files = [
-        ("pdf", open(doc.pdf, "rb")),
-        ("post", open(doc.post, "rb")),
-    ]
-    for scan in doc.scans:
-        files.append(("scan", open(scan, "rb")))
-    ip = doc.config["SERVER"]["address"]
-    port = doc.config["SERVER"]["port"]
-    try:
-        r = requests.post(f"http://{ip}:{port}/add", files=files)
-    except:
-        print(f"Failed to connect to server!")
-        raise
+    # Prepare post
+    post = dict(title=doc.title, date=doc.date, tags=doc.tags, ocr=doc.ocr)
+    if doc.mode == "update" or doc.mode == "replace":
+        post["_id"] = doc._id
+    if doc.mode == "add" or doc.mode == "replace":
+        files = [
+            ("post", json.dumps(post)),
+            ("pdf", open(doc.pdf, "rb")),
+        ]
+        for scan in doc.scans:
+            files.append(("scan", open(scan, "rb")))
+        try:
+            r = requests.post(f"{get_server_url()}/{doc.mode}", files=files)
+        except:
+            print(f"Failed to connect to server!")
+            raise
+    elif doc.mode == "update":
+        try:
+            r = requests.post(f"{get_server_url()}/{doc.mode}", json=post)
+        except:
+            print(f"Failed to connect to server!")
+            raise
+
     if r.status_code == 201:
         # need an object with "hard" property set to True
         fake_args = namedtuple("Args", "hard")(True)

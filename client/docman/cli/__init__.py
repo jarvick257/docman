@@ -13,3 +13,4 @@ from .query import query
 from .checkout import checkout
 from .pull import pull
 from .rm import rm
+from .mode import mode

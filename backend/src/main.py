@@ -11,7 +11,7 @@ from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
 from layout import layout, update_preview_grid, show_document
-from utils import db_lookup, db_add, db_delete, archive, get_thumbnail
+import utils
 
 server = Flask("Docman")
 server.config["MAX_CONTENT_LENGTH"] = 128 * 1024 * 1024  # 128 MB
@@ -37,7 +37,7 @@ app.layout = layout
 def update_result_store(tags, text, start_date, end_date):
     if tags is not None and tags != "":
         tags = tags.strip().split(" ")
-    matches = db_lookup(tags, text, start_date, end_date)
+    matches = utils.db_lookup(tags, text, start_date, end_date)
     print("Matches:", list(matches.keys()))
     return matches
 
@@ -129,14 +129,14 @@ def update_doc_view(selection, current_collapses):
 @server.route("/thumb/<image>")
 def serve_thumbnail(image):
     print(f"Requested thumb {image}")
-    path, image = get_thumbnail(image)
+    path, image = utils.get_thumbnail(image)
     # return "Document not found!", 404
     return send_from_directory(path, image)
 
 
 @server.route("/scan/<image>")
 def serve_scan(image):
-    path = os.path.join(archive(), ".scans")
+    path = os.path.join(utils.archive(), ".scans")
     if not os.path.isfile(os.path.join(path, image)):
         return "Documnet not found!", 404
     return send_from_directory(path, image)
@@ -144,13 +144,13 @@ def serve_scan(image):
 
 @server.route("/pdf/<document>")
 def serve_pdf(document):
-    if not os.path.isfile(os.path.join(archive(), document)):
+    if not os.path.isfile(os.path.join(utils.archive(), document)):
         return "Document not found!", 404
-    return send_from_directory(archive(), document)
+    return send_from_directory(utils.archive(), document)
 
 
 @server.route("/add", methods=["POST"])
-def on_upload():
+def on_add():
     scans = request.files.getlist("scan")
     pdf = request.files.get("pdf")
     post = request.files.get("post")
@@ -158,23 +158,46 @@ def on_upload():
         return "Need at least post and pdf file!", 400
 
     # Check if post is correct json file
-    post_path = secure_filename(post.filename)
-    post.save(post_path)
     try:
-        with open(post_path, "r") as fp:
-            post = json.load(fp)
-        os.remove(post_path)
+        post = json.load(post)
     except:
-        os.remove(post_path)
         return "Errors in submitted post file", 400
-    return db_add(post, pdf, scans)
+    return utils.db_add(post, pdf, scans)
+
+
+@server.route("/replace", methods=["POST"])
+def on_replace():
+    scans = request.files.getlist("scan")
+    pdf = request.files.get("pdf")
+    post = request.files.get("post")
+    if pdf is None or post is None:
+        return "Need at least post and pdf file!", 400
+    # Check if post is correct json file
+    try:
+        post = json.load(post)
+    except:
+        return "Errors in submitted post file", 400
+    if not "_id" in post:
+        return "Need id for replacing", 400
+    txt, code = utils.db_delete(post["_id"])
+    if code != 201:
+        return txt, code
+    return utils.db_add(post, pdf, scans)
+
+
+@server.route("/update", methods=["POST"])
+def on_update():
+    post = request.get_json()
+    if not "_id" in post:
+        return "Need id for upating", 400
+    return utils.db_update(post)
 
 
 @server.route("/remove", methods=["POST"])
 def on_remove():
     query = request.get_json()
     for _id in query["ids"]:
-        txt, code = db_delete(_id)
+        txt, code = utils.db_delete(_id)
         if code != 201:
             return txt, code
     return "OK", 201
@@ -183,7 +206,7 @@ def on_remove():
 @server.route("/query", methods=["GET"])
 def on_query():
     query = request.get_json()
-    matches = db_lookup(
+    matches = utils.db_lookup(
         _id=query.get("id", None),
         tags=query.get("tags", None),
         text=query.get("text", None),

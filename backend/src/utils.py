@@ -18,8 +18,7 @@ def _connect_db():
     else:
         client = MongoClient(f"mongodb://{server}")
     db = client["docman"]
-    collection = db["docman"]
-    return collection
+    return db["docman"]
 
 
 def archive():
@@ -27,7 +26,7 @@ def archive():
 
 
 def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
-    collection = _connect_db()
+    db = _connect_db()
     query = {}
     if _id:
         query["_id"] = ObjectId(_id)
@@ -47,7 +46,7 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
         query["date"]["$lte"] = date_until
     if text:
         query["ocr"] = {"$regex": re.compile(".*" + text + ".*", re.IGNORECASE)}
-    result = {str(result["_id"]): result for result in collection.find(query)}
+    result = {str(result["_id"]): result for result in db.find(query)}
     for post in result.values():
         post["_id"] = str(post["_id"])
         post["date"] = str(post["date"].date())
@@ -56,16 +55,9 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
 
 
 def db_add(post: dict, pdf, scans: list):
-    # existing _id means replace doc -> delte and create new with given id
+    logger.info(f"Adding new document: {post['title']}")
     if "_id" in post:
-        logger.info(f"Replacing document {post['title']}")
-        txt, code = db_delete(post["_id"])
         post["_id"] = ObjectId(post["_id"])
-        if code != 201:
-            logger.error("Can't replace because failed to delete old document")
-            return txt, code
-    else:
-        logger.info(f"Adding new document: {post['title']}")
 
     # fromisoformat only available in python3.7
     # post["date"] = datetime.fromisoformat(post["date"])
@@ -95,11 +87,9 @@ def db_add(post: dict, pdf, scans: list):
             return "Document already exists!", 409
         scan.save(scan_path)
         post["scans"].append(scan_file)
-
-    # Register db
     try:
-        collection = _connect_db()
-        collection.insert_one(post)
+        db = _connect_db()
+        db.insert_one(post)
     except:
         return "Failed to add document to database", 500
     return "OK", 201
@@ -110,11 +100,11 @@ def db_delete(_id_str: str):
     _id = ObjectId(_id_str)
     query = dict(_id=_id)
     try:
-        collection = _connect_db()
+        db = _connect_db()
     except:
         logger.error("Failed to connect to database")
         return "Failed to connect to database", 500
-    doc = collection.find_one(query)
+    doc = db.find_one(query)
     if doc is None or doc == {}:
         logger.error("Document doesn't exist")
         return f"No such document {_id}", 404
@@ -123,7 +113,34 @@ def db_delete(_id_str: str):
     for scan in doc["scans"]:
         os.remove(os.path.join(archive(), ".scans", scan))
     # delte db entry
-    collection.delete_one(query)
+    db.delete_one(query)
+    return "OK", 201
+
+
+def db_update(post: dict):
+    _id = post["_id"]
+    id_query = dict(_id=ObjectId(post["_id"]))
+    del post["_id"]
+    post["date"] = datetime.strptime(post["date"], "%Y-%m-%d")
+    logger.info(f"Updating {_id}")
+    try:
+        db = _connect_db()
+    except:
+        logger.error("Failed to connect to database")
+        return "Failed to connect to database", 500
+    doc = db.find_one(id_query)
+    if doc is None or doc == {}:
+        logger.error("Document doesn't exist")
+        return f"No such document {_id}", 404
+    # update doc
+    # This step is necessary so that we can change some attributes of the document
+    # while keeping others untouched
+    for k, v in post.items():
+        if k not in doc:
+            return f"Unknown attribute: {k}", 400
+        doc[k] = v
+    # replace in db with updated doc
+    db.replace_one(id_query, doc)
     return "OK", 201
 
 
