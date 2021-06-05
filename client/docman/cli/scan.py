@@ -32,7 +32,6 @@ def _run(args):
         doc.pdf = None
         print("Scans changed! Removed existing PDF")
     if doc.ocr is not None:
-        os.remove(doc.ocr)
         doc.ocr = None
         print("Scans changed! Removed existing OCR")
     doc.scans.append(output)
