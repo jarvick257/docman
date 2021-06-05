@@ -1,4 +1,6 @@
 def _ocr_worker(job_q, result_q):
+    import pytesseract
+
     while True:
         file, lang = job_q.get()
         if file is None:
