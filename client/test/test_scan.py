@@ -42,3 +42,28 @@ def test_scan_reset(capfd):
     assert out[1] == f"{cmd}"  # command execution
     assert out[2] == "Scans changed! Removed existing PDF"  # pdf warning
     assert out[3] == "Scans changed! Removed existing OCR"  # ocr warning
+
+
+def test_scan_fail(capfd):
+    doc = get_default_doc()
+
+    # Return value != 0
+    doc.config["INTEGRATION"]["scan"] = "python -c exit(1)"
+    doc.pdf = "some_pdf"
+    doc = _run(doc, None)
+    assert doc.scans == []
+    assert doc.pdf == "some_pdf"
+    assert capfd.readouterr() == (
+        "python -c exit(1)\npython -c exit(1) failed with return value 1!\n",
+        "",
+    )
+
+    # Non-existing command
+    doc.config["INTEGRATION"]["scan"] = "nonexistingcommand some_arg"
+    doc = _run(doc, None)
+    assert doc.scans == []
+    assert doc.pdf == "some_pdf"
+    assert capfd.readouterr() == (
+        "nonexistingcommand some_arg\nnonexistingcommand doesn't exist!\n",
+        "",
+    )
