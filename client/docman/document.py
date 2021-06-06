@@ -16,6 +16,7 @@ class Document:
         self.date = None
         self.post = None
         self.title = None
+        self.config = None
         self.wd = None
 
     @classmethod
@@ -27,7 +28,7 @@ class Document:
             try:
                 with open(meta_path) as fp:
                     meta = json.load(fp)
-            except FileNotFoundError:
+            except (FileNotFoundError, NotADirectoryError):
                 meta = {}
         doc = Document()
         doc._id = meta.get("_id", None)

@@ -1,5 +1,6 @@
 import argparse
 
+from docman import Document
 import docman.cli
 import docman.utils
 
@@ -25,7 +26,9 @@ def main():
     # check command arg
     args = parser.parse_args()
     docman.utils.set_config_path(args.config)
-    args.function(args)
+    doc = Document.load()
+    doc = args.function(doc, args)
+    doc.save()
 
 
 if __name__ == "__main__":
