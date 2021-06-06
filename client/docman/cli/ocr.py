@@ -1,22 +1,3 @@
-def _ocr_worker(job_q, result_q):
-    import pytesseract
-
-    while True:
-        file, lang = job_q.get()
-        if file is None:
-            break
-        txt = pytesseract.image_to_string(file, timeout=300, lang=lang)
-        txt = txt.replace("\n", " ")
-        txt = txt.replace(".", " ")
-        txt = txt.replace("!", " ")
-        txt = txt.replace("?", " ")
-        txt = txt.replace(",", " ")
-        txt = txt.replace(";", " ")
-        txt = txt.replace(":", " ")
-        words = set(txt.split(" "))
-        result_q.put(words)
-
-
 def ocr(subparser):
     parser = subparser.add_parser(
         "ocr",
@@ -34,17 +15,36 @@ def ocr(subparser):
         "--max_jobs",
         type=int,
         metavar="N",
-        help="max number of parallel ocr jobs. DEFAULT: %(default)s",
+        help="max number of parallel ocr jobs (default: %(default)s)",
         default=4,
     )
     parser.set_defaults(function=_run)
+
+
+def _ocr_worker(job_q, result_q):
+    import pytesseract
+
+    while True:
+        file, lang = job_q.get()
+        if file is None:
+            break
+        txt = pytesseract.image_to_string(file, lang=lang)
+        txt = txt.replace("\n", " ")
+        txt = txt.replace(".", " ")
+        txt = txt.replace("!", " ")
+        txt = txt.replace("?", " ")
+        txt = txt.replace(",", " ")
+        txt = txt.replace(";", " ")
+        txt = txt.replace(":", " ")
+        words = set(txt.split(" "))
+        result_q.put(words)
 
 
 def _run(args):
     import datetime as dt
     from multiprocessing import Process, Queue
     from progress.bar import Bar
-    import pytesseract
+
     from docman import Document
     from docman.utils import get_config
 
@@ -60,8 +60,8 @@ def _run(args):
         for _ in range(min(args.max_jobs, len(doc.scans)))
     ]
     [worker.start() for worker in workers]
-    [job_q.put((scan, args.lang)) for scan in doc.scans]
-    [job_q.put((None, None)) for _ in range(len(workers))]
+    [job_q.put((scan, args.lang)) for _ in doc.scans]
+    [job_q.put((None, None)) for _ in workers]
 
     bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
     for i in range(len(doc.scans)):

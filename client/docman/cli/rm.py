@@ -16,13 +16,6 @@ def rm(subparser):
     parser.set_defaults(function=_run)
 
 
-def _wait_for_userconfirmation(noconfirm=False):
-    if noconfirm:
-        return True
-    r = input("If you wish to continue, please type yes: ")
-    return r.lower() == "yes"
-
-
 def _run(args):
     import os
     import json
@@ -51,9 +44,11 @@ def _run(args):
     # Ask for confirmation
     pl = "s" if len(ids) > 1 else ""
     print(f"You are about to delete {len(ids)} document{pl} ({num_scans} scan{pl}).")
-    if not _wait_for_userconfirmation(args.noconfirm):
-        print("Aborting...")
-        exit(1)
+    if not args.noconfirm:
+        r = input("If you wish to continue, please type yes: ")
+        if r.lower() != "yes":
+            print("Aborting...")
+            exit(1)
 
     # Delete
     r = requests.post(f"{url}/remove", json=dict(ids=ids))

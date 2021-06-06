@@ -17,38 +17,6 @@ def push(subparser):
     parser.set_defaults(function=_run)
 
 
-def _prepare_full(doc):
-    from .ocr import _run as ocr
-    from .pdf import _run as pdf
-
-    if doc.scans == [] or doc.tags == [] or doc.title is None:
-        print("Document is not ready to be pushed!")
-        print("Make sure you have at least one scan, one ore more tags and a title.")
-        exit(1)
-    if doc.ocr is None:
-        ocr_args = namedtuple("fake_args", "lang", "max_jobs")(None, 4)
-        ocr(ocr_args)
-        doc = Document.load()
-    if not doc.pdf:
-        pdf(None)
-        doc = Document.load()
-    return doc
-
-
-def _prepare_update(doc):
-    if (
-        doc._id is None
-        or doc.tags == []
-        or doc.title is None
-        or doc.date is None
-        or doc.ocr is None
-    ):
-        print("Document is not ready to be pushed!")
-        print("Required attributes: id, tags, title, date, ocr")
-        exit(1)
-    return doc
-
-
 def _run(args):
     import os
     import requests
@@ -58,15 +26,38 @@ def _run(args):
     from docman import Document
     from docman.utils import get_server_url
 
+    from .ocr import _run as ocr
+    from .pdf import _run as pdf
     from .reset import _run as reset
 
     doc = Document.load()
 
     # Check for if ready to be pushed
     if doc.mode == "add" or doc.mode == "replace":
-        doc = _prepare_full(doc)
+        if doc.scans == [] or doc.tags == [] or doc.title is None:
+            print("Document is not ready to be pushed!")
+            print(
+                "Make sure you have at least one scan, one ore more tags and a title."
+            )
+            exit(1)
+        if doc.ocr is None:
+            ocr_args = namedtuple("fake_args", "lang", "max_jobs")(None, 4)
+            ocr(ocr_args)
+            doc = Document.load()
+        if not doc.pdf:
+            pdf(None)
+            doc = Document.load()
     elif doc.mode == "update":
-        doc = _prepare_update(doc)
+        if (
+            doc._id is None
+            or doc.tags == []
+            or doc.title is None
+            or doc.date is None
+            or doc.ocr is None
+        ):
+            print("Document is not ready to be pushed!")
+            print("Required attributes: id, tags, title, date, ocr")
+            exit(1)
     else:
         print(f"Unrecognized mode: {mode}")
         exit(1)

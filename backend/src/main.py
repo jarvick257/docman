@@ -218,8 +218,6 @@ def on_query():
         keys = list(matches.keys())[: int(query["n_results"])]
         print(keys)
         matches = {k: matches[k] for k in keys}
-    if query.get("id_only", False):
-        return jsonify(list(matches.keys()))
     return jsonify(matches)
 
 

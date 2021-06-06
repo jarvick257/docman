@@ -10,8 +10,6 @@ def title(subparser):
 
 
 def _run(args):
-    import os
-    from datetime import datetime
     from docman import Document
 
     if not args.clear and args.title == []:

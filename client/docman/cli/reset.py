@@ -1,12 +1,12 @@
 def reset(subparser):
     parser = subparser.add_parser(
         "reset",
-        description="Resets working state.",
+        description="Resets working state (by default, existing scans are kept)",
     )
     parser.add_argument(
         "--hard",
         action="store_true",
-        help="deletes all files, including scans",
+        help="delete all files, including scans",
     )
     parser.set_defaults(function=_run)
 

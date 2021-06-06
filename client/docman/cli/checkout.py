@@ -14,12 +14,13 @@ def checkout(subparser):
 def _run(args):
     import os
     import json
-    import sys
     import requests
     import urllib.request
+
+    from progress.bar import Bar
+
     from docman import Document
     from docman.utils import get_server_url
-    from progress.bar import Bar
 
     doc = Document.load()
     # don't overwrite existing document
@@ -29,14 +30,14 @@ def _run(args):
             "Push current document with 'docman push' or discard everything with "
             "'docman reset --hard'"
         )
-        sys.exit(1)
+        exit(1)
 
     # get document info
     url = get_server_url()
     response = requests.get(f"{url}/query", json=dict(id=args.id))
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
-        sys.exit(1)
+        exit(1)
 
     # Create document
     meta = response.json()[args.id]

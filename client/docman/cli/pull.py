@@ -25,8 +25,6 @@ def pull(subparser):
 
 def _run(args):
     import os
-    import json
-    import sys
     import requests
     import urllib.request
     from docman.utils import get_server_url
@@ -36,7 +34,7 @@ def _run(args):
     response = requests.get(f"{url}/query", json=dict(id=args.id))
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
-        sys.exit(1)
+        exit(1)
     meta = response.json()[args.id]
 
     # Create file list
