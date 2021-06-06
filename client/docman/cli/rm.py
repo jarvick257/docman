@@ -26,7 +26,7 @@ def _run(doc, args):
     # Check ids
     ids = []
     num_scans = 0
-    for _id in set(args.ids):
+    for _id in sorted(set(args.ids)):  # sorted only needed for unittests
         # get document info
         response = requests.get(f"{url}/query", json=dict(id=_id))
         if response.status_code != 200 or response.json() == {}:
@@ -41,8 +41,10 @@ def _run(doc, args):
         return None, 0
 
     # Ask for confirmation
-    pl = "s" if len(ids) > 1 else ""
-    print(f"You are about to delete {len(ids)} document{pl} ({num_scans} scan{pl}).")
+    pl = lambda x: "s" if x != 1 else ""
+    print(
+        f"You are about to delete {len(ids)} document{pl(len(ids))} ({num_scans} scan{pl(num_scans)})."
+    )
     if not args.noconfirm:
         r = input("If you wish to continue, please type yes: ")
         if r.lower() != "yes":
@@ -54,5 +56,5 @@ def _run(doc, args):
     if r.status_code != 201:
         print(f"Remove failed with code {r.status_code}: {r.text}")
         return None, 1
-    print(f"Successfully removed {len(ids)} documents")
+    print(f"Successfully removed {len(ids)} document{pl(len(ids))}")
     return None, 0

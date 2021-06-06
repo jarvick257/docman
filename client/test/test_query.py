@@ -27,18 +27,16 @@ def test_query_noarg(with_test_config):
     doc = docman.Document.load({})
     mock = RequestsMock()
     requests.get = mock.get
-    mock.set_response("{}", 200)
+    mock.set_get_response("{}", 200)
     assert _run(doc, args()) == (None, 0)
-    assert mock.url == "http://localhost:8123/query"
-    assert mock.data == {}
-    assert mock.files is None
+    assert mock.last_get_rq == ("http://localhost:8123/query", {}, None)
 
 
 def test_query_args(with_test_config):
     doc = docman.Document.load({})
     mock = RequestsMock()
     requests.get = mock.get
-    mock.set_response("{}", 200)
+    mock.set_get_response("{}", 200)
     args_d = dict(
         id="id",
         text="text",
@@ -56,16 +54,14 @@ def test_query_args(with_test_config):
     # request data is same as arguments except tags are split
     req_d = args_d
     req_d["tags"] = ["some", "tags"]
-    assert mock.url == "http://localhost:8123/query"
-    assert mock.data == req_d
-    assert mock.files is None
+    assert mock.last_get_rq == ("http://localhost:8123/query", req_d, None)
 
 
 def test_query_wrong_date(capfd, with_test_config):
     doc = docman.Document.load({})
     mock = RequestsMock()
     requests.get = mock.get
-    mock.set_response("{}", 200)
+    mock.set_get_response("{}", 200)
     assert _run(doc, args(date_from="20201201")) == (None, 1)
     out, err = capfd.readouterr()
     assert err == ""
@@ -74,7 +70,7 @@ def test_query_wrong_date(capfd, with_test_config):
     doc = docman.Document.load({})
     mock = RequestsMock()
     requests.get = mock.get
-    mock.set_response("{}", 200)
+    mock.set_get_response("{}", 200)
     assert _run(doc, args(date_until="2020-13-01")) == (None, 1)
     out, err = capfd.readouterr()
     assert err == ""

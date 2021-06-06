@@ -43,6 +43,23 @@ def test_status_noarg(capfd):
     assert out[6] == "Pdf:   Yes"
 
 
+def test_status_mode(capfd):
+    # Add
+    doc = get_default_doc()
+    doc._id = "some id"
+    doc.mode = "add"
+    assert _run(doc, args()) == (None, 0)
+    capfd.readouterr()[0].split("\n")[0] == "Mode:  add"
+    # Replace
+    doc.mode = "replace"
+    assert _run(doc, args()) == (None, 0)
+    capfd.readouterr()[0].split("\n")[0] == "Mode:  replace some id"
+    # Replace
+    doc.mode = "edit"
+    assert _run(doc, args()) == (None, 0)
+    capfd.readouterr()[0].split("\n")[0] == "Mode:  edit some id"
+
+
 def test_status_ocr(capfd):
     doc = get_default_doc()
     assert _run(doc, args(full_ocr=True)) == (None, 0)
