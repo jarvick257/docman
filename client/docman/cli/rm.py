@@ -16,13 +16,12 @@ def rm(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
     import json
     import requests
-    from docman.utils import get_server_url
 
-    url = get_server_url()
+    url = doc.server_url
 
     # Check ids
     ids = []
@@ -56,3 +55,4 @@ def _run(args):
         print(f"Remove failed with code {r.status_code}: {r.text}")
         exit(1)
     print(f"Successfully removed {len(ids)} documents")
+    exit(0)  # no need to save

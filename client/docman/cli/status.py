@@ -5,12 +5,12 @@ def status(subparser):
     parser.set_defaults(function=_run)
 
 
-def default_action(args):
+def default_action(doc, args):
     # When run as default action, argparser doesn't pass
     # default arguments from subparser. So we have to set them here again.
     args.full_ocr = False
     args.json = False
-    _run(args)
+    return _run(doc, args)
 
 
 def _run(doc, args):

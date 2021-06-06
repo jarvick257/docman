@@ -17,20 +17,15 @@ def push(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
     import requests
     import json
     from collections import namedtuple
 
-    from docman import Document
-    from docman.utils import get_server_url
-
     from .ocr import _run as ocr
     from .pdf import _run as pdf
     from .reset import _run as reset
-
-    doc = Document.load()
 
     # Check for if ready to be pushed
     if doc.mode == "add" or doc.mode == "replace":
@@ -41,12 +36,10 @@ def _run(args):
             )
             exit(1)
         if doc.ocr is None:
-            ocr_args = namedtuple("fake_args", "lang", "max_jobs")(None, 4)
-            ocr(ocr_args)
-            doc = Document.load()
+            ocr_args = namedtuple("fake_args", ("lang", "max_jobs"))(None, 4)
+            doc = ocr(doc, ocr_args)
         if not doc.pdf:
-            pdf(None)
-            doc = Document.load()
+            doc = pdf(doc, None)
     elif doc.mode == "update":
         if (
             doc._id is None
@@ -74,13 +67,13 @@ def _run(args):
         for scan in doc.scans:
             files.append(("scan", open(scan, "rb")))
         try:
-            r = requests.post(f"{get_server_url()}/{doc.mode}", files=files)
+            r = requests.post(f"{doc.server_url}/{doc.mode}", files=files)
         except:
             print(f"Failed to connect to server!")
             raise
     elif doc.mode == "update":
         try:
-            r = requests.post(f"{get_server_url()}/{doc.mode}", json=post)
+            r = requests.post(f"{doc.server_url}/{doc.mode}", json=post)
         except:
             print(f"Failed to connect to server!")
             raise
@@ -88,9 +81,9 @@ def _run(args):
     if r.status_code == 201:
         # need an object with "hard" property set to True
         fake_args = namedtuple("Args", "hard")(True)
-        reset(fake_args)
+        doc = reset(doc, fake_args)
         print("Push successful")
-        exit(0)
+        return doc
     else:
         print(f"Push failed with code {r.status_code}: {r.text}")
         exit(1)

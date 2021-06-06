@@ -6,11 +6,9 @@ def pdf(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
-    from docman import Document
 
-    doc = Document.load()
     if doc.scans == []:
         print("No scans!")
         exit(1)
@@ -20,4 +18,4 @@ def _run(args):
     print(cmd)
     os.system(cmd)
     doc.pdf = output
-    doc.save()
+    return doc

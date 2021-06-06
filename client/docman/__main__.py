@@ -29,6 +29,7 @@ def main():
     doc = Document.load()
     doc = args.function(doc, args)
     doc.save()
+    doc.cleanup()
 
 
 if __name__ == "__main__":

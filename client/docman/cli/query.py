@@ -108,19 +108,21 @@ def _print_results(args, response):
     print(df[["_id", "date", "title", "tags"]].to_string(header=args.Q))
 
 
-def _run(args):
+def _run(doc, args):
     import requests
-    import docman.utils
 
     # Get query
     query = _args_to_query(args)
 
     # Get url
-    config = docman.utils.get_config()["SERVER"]
-    url = f"http://{config['address']}:{config['port']}/query"
+    url = f"{doc.server_url}/query"
 
     # Get results
-    response = requests.get(url, json=query)
+    try:
+        response = requests.get(url, json=query)
+    except:
+        print(f"Failed to connect to {url}")
+        exit(1)
     if response.status_code != 200:
         print(f"Failed to connect to backend! (code {response.status_code})")
         print(response.text)
@@ -128,3 +130,4 @@ def _run(args):
 
     # Print
     _print_results(args, response)
+    exit(0)  # no need to save

@@ -11,18 +11,15 @@ def checkout(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
     import json
     import requests
     import urllib.request
 
+    from docman import Document
     from progress.bar import Bar
 
-    from docman import Document
-    from docman.utils import get_server_url
-
-    doc = Document.load()
     # don't overwrite existing document
     if doc.is_wip():
         print(
@@ -33,8 +30,7 @@ def _run(args):
         exit(1)
 
     # get document info
-    url = get_server_url()
-    response = requests.get(f"{url}/query", json=dict(id=args.id))
+    response = requests.get(f"{doc.server_url}/query", json=dict(id=args.id))
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
         exit(1)
@@ -53,12 +49,13 @@ def _run(args):
         exit(0)
 
     # create file list as tuple (url, save path)
-    files = [(f"{url}/pdf/{meta['pdf']}", "combined.pdf")]
+    files = [(f"{doc.server_url}/pdf/{meta['pdf']}", "combined.pdf")]
     for scan in meta["scans"]:
-        files.append((f"{url}/scan/{scan}", scan))
+        files.append((f"{doc.server_url}/scan/{scan}", scan))
     # Download files
     bar = Bar("Checking out files", max=len(files))
     for i, (url, path) in enumerate(files):
         bar.next()
         urllib.request.urlretrieve(url, filename=os.path.join(doc.wd, path))
     bar.finish()
+    return doc

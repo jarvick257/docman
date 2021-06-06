@@ -1,6 +1,7 @@
 import os
 import datetime as dt
 import json
+import glob
 
 from docman.utils import get_config
 
@@ -44,6 +45,12 @@ class Document:
         doc.path = meta_path
         return doc
 
+    @property
+    def server_url(self):
+        return (
+            f"http://{self.config['SERVER']['address']}:{self.config['SERVER']['port']}"
+        )
+
     def is_wip(self):
         return not (
             self.scans == []
@@ -52,6 +59,13 @@ class Document:
             and self.pdf is None
             and self.title is None
         )
+
+    def cleanup(self):
+        for f in glob.glob(os.path.join(self.wd, "*")):
+            if not os.path.isfile(f):
+                continue
+            if f not in self.scans and f != self.pdf and f != self.path:
+                os.remove(f)
 
     def save(self):
         meta = self.to_dict()

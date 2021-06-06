@@ -40,18 +40,13 @@ def _ocr_worker(job_q, result_q):
         result_q.put(words)
 
 
-def _run(args):
+def _run(doc, args):
     import datetime as dt
     from multiprocessing import Process, Queue
     from progress.bar import Bar
 
-    from docman import Document
-    from docman.utils import get_config
-
     if args.lang is None:
-        config = get_config()
-        args.lang = config["DEFAULT"]["default_language"]
-    doc = Document.load()
+        args.lang = doc.config["DEFAULT"]["default_language"]
     text = set()
     result_q = Queue()
     job_q = Queue()
@@ -74,4 +69,4 @@ def _run(args):
 
     print(f"Found {len(text)} unique words")
     doc.ocr = " ".join(text)
-    doc.save()
+    return doc

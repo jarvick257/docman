@@ -13,11 +13,9 @@ def preview(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
-    from docman import Document
 
-    doc = Document.load()
     if (args.selection == ["pdf"] or args.selection == "auto") and doc.pdf is not None:
         print("Previewing pdf")
         cmd = doc.config["INTEGRATION"]["pdf_preview"]
@@ -29,3 +27,4 @@ def _run(args):
         os.system(f"{cmd} {files}")
     else:
         print("Nothing to preview")
+    exit(0)  # no need to save
