@@ -9,24 +9,14 @@ def title(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
-    from docman import Document
-
-    if not args.clear and args.title == []:
-        parser.print_help()
-        exit(1)
-
-    doc = Document.load()
+def _run(doc, args):
     if args.clear:
         doc.title = None
-        doc.save()
-        print("Title was cleared")
-        return
-
-    # When title is passed as multiple args
-    title = "_".join(args.title)
-    # When title is passed as single arg (eg in quotes)
-    title = title.replace(" ", "_")
-    doc.title = title
-    print(f"Title was set to {doc.title}")
-    doc.save()
+    elif args.title != []:
+        # When title is passed as multiple args
+        title = "_".join(args.title)
+        # When title is passed as single arg (eg in quotes)
+        title = title.replace(" ", "_")
+        doc.title = title
+    print("" if doc.title is None else doc.title)
+    return doc
