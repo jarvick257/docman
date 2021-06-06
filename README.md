@@ -14,3 +14,4 @@ Docman - a scriptable, git inspired document management system featuring documen
 - [ ] housekeeping: clean up orphaned documents (and all thumbs?) periodically (eg once a day) or at service start
 - [ ] periodic backups: sync documents with remote server periodically
 - [ ] unit tests
+- [ ] https and client authentification
