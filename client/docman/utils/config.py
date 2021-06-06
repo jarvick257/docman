@@ -13,7 +13,7 @@ def _create_default_config():
     config["DEFAULT"] = {"working_dir": "/tmp/docman", "default_language": "eng"}
     config["SERVER"] = {"address": "localhost", "port": "8123"}
     config["INTEGRATION"] = {
-        "scan": "scanimage --device airscan:w0:HP --format {fmt} --output-file {file} --progress",
+        "scan": "scanimage --device airscan:w0:HP --format jpg --output-file {file} --progress",
         "image_preview": "feh",
         "pdf_preview": os.environ.get("BROWSER", "firefox"),
     }
