@@ -21,10 +21,10 @@ def _run(doc, args):
         sp.check_call(cmd.split())
     except sp.CalledProcessError as e:
         print(f"{cmd} failed with return value {e.args[0]}!")
-        return doc
+        return None, 1
     except FileNotFoundError as e:
         print(f"{cmd.split()[0]} doesn't exist!")
-        return doc
+        return None, 1
 
     if doc.pdf is not None:
         doc.pdf = None
@@ -33,4 +33,4 @@ def _run(doc, args):
         doc.ocr = None
         print("Scans changed! Removed existing OCR")
     doc.scans.append(output)
-    return doc
+    return doc, 0

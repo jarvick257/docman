@@ -38,7 +38,7 @@ def _run(doc, args):
 
     if len(ids) == 0:
         print("Nothing to delete.")
-        exit(0)
+        return None, 0
 
     # Ask for confirmation
     pl = "s" if len(ids) > 1 else ""
@@ -47,12 +47,12 @@ def _run(doc, args):
         r = input("If you wish to continue, please type yes: ")
         if r.lower() != "yes":
             print("Aborting...")
-            exit(1)
+            return None, 1
 
     # Delete
     r = requests.post(f"{url}/remove", json=dict(ids=ids))
     if r.status_code != 201:
         print(f"Remove failed with code {r.status_code}: {r.text}")
-        exit(1)
+        return None, 1
     print(f"Successfully removed {len(ids)} documents")
-    exit(0)  # no need to save
+    return None, 0

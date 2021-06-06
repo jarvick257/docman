@@ -33,7 +33,7 @@ def _run(doc, args):
     response = requests.get(f"{url}/query", json=dict(id=args.id))
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
-        exit(1)
+        return None, 1
     meta = response.json()[args.id]
 
     # Create file list
@@ -51,4 +51,4 @@ def _run(doc, args):
     for i, (url, path) in enumerate(files):
         print(f"Downloading {i+1}/{len(files)}: {path}")
         urllib.request.urlretrieve(url, filename=path)
-    exit(0)  # no need to save
+    return None, 0

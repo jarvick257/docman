@@ -30,7 +30,7 @@ def get_default_doc():
 
 def test_status_noarg(capfd):
     doc = get_default_doc()
-    doc = _run(doc, args())
+    assert _run(doc, args()) == (None, 0)
     out, err = capfd.readouterr()
     assert err == ""
     out = out.split("\n")
@@ -45,18 +45,23 @@ def test_status_noarg(capfd):
 
 def test_status_ocr(capfd):
     doc = get_default_doc()
-    doc = _run(doc, args(full_ocr=True))
+    assert _run(doc, args(full_ocr=True)) == (None, 0)
     assert capfd.readouterr()[0].split("\n")[5] == "Ocr:   this is some ocr"
+
+    doc = get_default_doc()
     doc.ocr = None
-    doc = _run(doc, args())
+    assert _run(doc, args()) == (None, 0)
     assert capfd.readouterr()[0].split("\n")[5] == "Ocr:   0 words"
-    doc = _run(doc, args(full_ocr=True))
+
+    doc = get_default_doc()
+    doc.ocr = None
+    assert _run(doc, args(full_ocr=True)) == (None, 0)
     assert capfd.readouterr()[0].split("\n")[5] == "Ocr:   None"
 
 
 def test_status_json(capfd):
     doc = get_default_doc()
-    doc = _run(doc, args(json=True))
+    assert _run(doc, args(json=True)) == (None, 0)
     out, err = capfd.readouterr()
     d = dict(
         tags=["alpha", "omega"],
@@ -70,7 +75,9 @@ def test_status_json(capfd):
     )
     assert err == ""
     assert json.loads(out) == d
-    doc = _run(doc, args(json=True, full_ocr=True))
+
+    doc = get_default_doc()
+    assert _run(doc, args(json=True, full_ocr=True)) == (None, 0)
     out, err = capfd.readouterr()
     d["ocr"] = "this is some ocr"
     assert err == ""

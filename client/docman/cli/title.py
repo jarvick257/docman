@@ -19,4 +19,4 @@ def _run(doc, args):
         title = title.replace(" ", "_")
         doc.title = title
     print("" if doc.title is None else doc.title)
-    return doc
+    return doc, 0

@@ -29,4 +29,4 @@ def _run(doc, args):
         doctags.add(tag.lower().replace(" ", "_"))
     doc.tags = sorted(list(doctags))
     print(" ".join(sorted(doc.tags)))
-    return doc
+    return doc, 0

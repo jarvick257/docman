@@ -18,4 +18,4 @@ def _run(doc, args):
         print("EDITOR environment variable not set. Falling back to vi.")
         editor = "vi"
     os.system(f"{editor} {get_config_path()}")
-    exit(0)  # no need to save
+    return None, 0

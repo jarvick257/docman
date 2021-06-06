@@ -17,22 +17,26 @@ def args(**kwargs):
 
 
 def test_tag_add(capfd):
-    doc = docman.Document()
+    doc = docman.Document.load({})
     doc.tags = ["alpha", "beta"]
     # add single
-    doc = _run(doc, args(add=["gamma"]))
+    doc, retval = _run(doc, args(add=["gamma"]))
+    assert retval == 0
     assert doc.tags == ["alpha", "beta", "gamma"]
     assert capfd.readouterr() == ("alpha beta gamma\n", "")
     # add multiple
-    doc = _run(doc, args(add=["one", "two"]))
+    doc, retval = _run(doc, args(add=["one", "two"]))
+    assert retval == 0
     assert doc.tags == ["alpha", "beta", "gamma", "one", "two"]
     assert capfd.readouterr() == ("alpha beta gamma one two\n", "")
     # Existing tags are ignored
-    doc = _run(doc, args(add=["one", "two"]))
+    doc, retval = _run(doc, args(add=["one", "two"]))
+    assert retval == 0
     assert doc.tags == ["alpha", "beta", "gamma", "one", "two"]
     assert capfd.readouterr() == ("alpha beta gamma one two\n", "")
     # Add without --add flag (positional)
-    doc = _run(doc, args(tags=["aa", "bb"]))
+    doc, retval = _run(doc, args(tags=["aa", "bb"]))
+    assert retval == 0
     assert doc.tags == ["aa", "alpha", "bb", "beta", "gamma", "one", "two"]
     assert capfd.readouterr() == ("aa alpha bb beta gamma one two\n", "")
 
@@ -40,7 +44,8 @@ def test_tag_add(capfd):
 def test_tag_remove(capfd):
     doc = docman.Document()
     doc.tags = ["alpha", "beta"]
-    doc = _run(doc, args(remove=["beta", "gamma"]))
+    doc, retval = _run(doc, args(remove=["beta", "gamma"]))
+    assert retval == 0
     assert doc.tags == ["alpha"]
     assert capfd.readouterr() == ("alpha\n", "")
 
@@ -48,7 +53,8 @@ def test_tag_remove(capfd):
 def test_tag_clear(capfd):
     doc = docman.Document()
     doc.tags = ["alpha", "beta"]
-    doc = _run(doc, args(clear=True))
+    doc, retval = _run(doc, args(clear=True))
+    assert retval == 0
     assert doc.tags == []
     assert capfd.readouterr() == ("\n", "")
 
@@ -56,6 +62,7 @@ def test_tag_clear(capfd):
 def test_tag_combination(capfd):
     doc = docman.Document()
     doc.tags = ["alpha", "beta"]
-    doc = _run(doc, args(clear=True, tags=["one", "two"]))
+    doc, retval = _run(doc, args(clear=True, tags=["one", "two"]))
+    assert retval == 0
     assert doc.tags == ["one", "two"]
     assert capfd.readouterr() == ("one two\n", "")

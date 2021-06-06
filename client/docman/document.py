@@ -22,16 +22,16 @@ class Document:
 
     @classmethod
     def load(cls, meta=None):
-        config = get_config()
-        wd = config["DEFAULT"]["working_dir"]
-        meta_path = os.path.join(wd, "meta.json")
+        doc = Document()
+        doc.config = get_config()
+        doc.wd = doc.config["DEFAULT"]["working_dir"]
+        doc.path = os.path.join(doc.wd, "meta.json")
         if meta is None:
             try:
-                with open(meta_path) as fp:
+                with open(doc.path) as fp:
                     meta = json.load(fp)
             except (FileNotFoundError, NotADirectoryError):
                 meta = {}
-        doc = Document()
         doc._id = meta.get("_id", None)
         doc.scans = meta.get("scans", [])
         doc.tags = meta.get("tags", [])
@@ -40,9 +40,6 @@ class Document:
         doc.title = meta.get("title", None)
         doc.date = meta.get("date", str(dt.date.today()))
         doc.mode = meta.get("mode", "add")
-        doc.wd = wd
-        doc.config = config
-        doc.path = meta_path
         return doc
 
     @property

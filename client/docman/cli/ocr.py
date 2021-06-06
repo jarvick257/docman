@@ -58,15 +58,20 @@ def _run(doc, args):
     [job_q.put((scan, args.lang)) for _ in doc.scans]
     [job_q.put((None, None)) for _ in workers]
 
-    bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
-    for i in range(len(doc.scans)):
-        bar.next()
-        words = result_q.get()
-        for word in words:
-            text.add(word.strip())
-    bar.finish()
-    [worker.join() for worker in workers]
+    try:
+        bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
+        for i in range(len(doc.scans)):
+            bar.next()
+            words = result_q.get()
+            for word in words:
+                text.add(word.strip())
+    except KeyboardInterrupt:
+        [worker.terminate() for worker in workers]
+        print("Caught keyboard interrupt. Stopping workers...")
+    finally:
+        bar.finish()
+        [worker.join() for worker in workers]
 
     print(f"Found {len(text)} unique words")
     doc.ocr = " ".join(text)
-    return doc
+    return doc, 0

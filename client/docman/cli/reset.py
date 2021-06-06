@@ -20,4 +20,4 @@ def _run(doc, args):
     doc = Document.load({})
     if not args.hard:
         doc.scans = sorted(glob.glob(os.path.join(doc.wd, "*.jpg")))
-    return doc
+    return doc, 0

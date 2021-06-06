@@ -16,6 +16,6 @@ def _run(doc, args):
         print(f"Set document date to {new_date}")
     except ValueError:
         print("Date must be in YYYY-MM-DD format.")
-        exit(1)
+        return None, 1
     doc.date = new_date
-    return doc
+    return doc, 0

@@ -17,9 +17,9 @@ def test_scan_noarg(capfd):
     doc = get_default_doc()
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     assert doc.scans == []
-    doc = _run(doc, None)
-
+    doc, retval = _run(doc, None)
     cmd = f"scancmd {doc.wd}/{timestamp}.jpg"
+    assert retval == 0
     assert capfd.readouterr() == (f"echo {cmd}\n{cmd}\n", "")
     assert doc.scans == [f"{doc.wd}/{timestamp}.jpg"]
 
@@ -29,9 +29,10 @@ def test_scan_reset(capfd):
     doc.ocr = "some ocr"
     doc.pdf = "some pdf"
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    doc = _run(doc, None)
+    doc, retval = _run(doc, None)
 
     cmd = f"scancmd {doc.wd}/{timestamp}.jpg"
+    assert retval == 0
     assert doc.scans == [f"{doc.wd}/{timestamp}.jpg"]
     assert doc.pdf == None
     assert doc.ocr == None
@@ -44,25 +45,26 @@ def test_scan_reset(capfd):
     assert out[3] == "Scans changed! Removed existing OCR"  # ocr warning
 
 
-def test_scan_fail(capfd):
+def test_scan_fail_retval(capfd):
     doc = get_default_doc()
-
-    # Return value != 0
     doc.config["INTEGRATION"]["scan"] = "python -c exit(1)"
     doc.pdf = "some_pdf"
-    doc = _run(doc, None)
-    assert doc.scans == []
-    assert doc.pdf == "some_pdf"
+    doc, retval = _run(doc, None)
+    assert retval == 1
+    assert doc is None
     assert capfd.readouterr() == (
         "python -c exit(1)\npython -c exit(1) failed with return value 1!\n",
         "",
     )
 
-    # Non-existing command
+
+def test_scan_fail_unknown(capfd):
+    doc = get_default_doc()
     doc.config["INTEGRATION"]["scan"] = "nonexistingcommand some_arg"
-    doc = _run(doc, None)
-    assert doc.scans == []
-    assert doc.pdf == "some_pdf"
+    doc.pdf = "some_pdf"
+    doc, retval = _run(doc, None)
+    assert retval == 1
+    assert doc is None
     assert capfd.readouterr() == (
         "nonexistingcommand some_arg\nnonexistingcommand doesn't exist!\n",
         "",

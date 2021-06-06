@@ -27,4 +27,4 @@ def _run(doc, args):
         os.system(f"{cmd} {files}")
     else:
         print("Nothing to preview")
-    exit(0)  # no need to save
+    return None, 0

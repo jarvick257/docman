@@ -28,7 +28,7 @@ def _run(doc, args):
         d = doc.to_dict()
         d["ocr"] = ocr_str
         print(json.dumps(d, indent=2))
-        return doc
+        return None, 0
 
     if doc.mode == "add":
         mode = doc.mode
@@ -41,4 +41,4 @@ def _run(doc, args):
     print(f"Scans: {len(doc.scans)}")
     print(f"Ocr:   {ocr_str}")
     print(f"Pdf:   {'Yes' if doc.pdf else 'No'}")
-    return doc
+    return None, 0

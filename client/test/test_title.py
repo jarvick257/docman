@@ -17,7 +17,8 @@ def args(**kwargs):
 def test_title_clear(capfd):
     doc = docman.Document()
     doc.title = "some title"
-    doc = _run(doc, args(clear=True))
+    doc, retval = _run(doc, args(clear=True))
+    assert retval == 0
     assert doc.title is None
     assert capfd.readouterr() == ("\n", "")
 
@@ -25,10 +26,12 @@ def test_title_clear(capfd):
 def test_title_set(capfd):
     doc = docman.Document()
     assert doc.title is None
-    doc = _run(doc, args(title=["Single Arg Title"]))
+    doc, retval = _run(doc, args(title=["Single Arg Title"]))
+    assert retval == 0
     assert doc.title == "Single_Arg_Title"
     assert capfd.readouterr() == ("Single_Arg_Title\n", "")
-    doc = _run(doc, args(title=["Multi", "Arg Title"]))
+    doc, retval = _run(doc, args(title=["Multi", "Arg Title"]))
+    assert retval == 0
     assert doc.title == "Multi_Arg_Title"
     assert capfd.readouterr() == ("Multi_Arg_Title\n", "")
 
@@ -36,6 +39,7 @@ def test_title_set(capfd):
 def test_title_noarg(capfd):
     doc = docman.Document()
     doc.title = "some_title"
-    doc = _run(doc, args())
+    doc, retval = _run(doc, args())
+    assert retval == 0
     assert doc.title == "some_title"
     assert capfd.readouterr() == ("some_title\n", "")

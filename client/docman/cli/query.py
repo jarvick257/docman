@@ -56,9 +56,11 @@ def query(subparser):
     parser.set_defaults(function=_run)
 
 
-def _args_to_query(args):
+def _run(doc, args):
+    import requests
     import datetime as dt
 
+    # Get query
     query = {}
     try:
         if args.date_from is not None:
@@ -73,26 +75,39 @@ def _args_to_query(args):
             )
     except ValueError:
         print("Date must be in YYYY-MM-DD format.")
-        exit(1)
+        return None, 1
     if args.id is not None:
         query["id"] = args.id.strip()
     if args.tags is not None:
         query["tags"] = args.tags.strip().lower().split(",")
     if args.text is not None:
         query["text"] = args.text.strip()
-    return query
 
+    # Get url
+    url = f"{doc.server_url}/query"
 
-def _print_results(args, response):
+    # Get results
+    try:
+        print(requests.get)
+        response = requests.get(url, json=query)
+    except:
+        print(f"Failed to connect to {url}")
+        return None, 1
+    if response.status_code != 200:
+        print(f"Failed to connect to backend! (code {response.status_code})")
+        print(response.text)
+        return None, 1
+
+    # Print
     # print only IDs
     if args.short:
         print("\n".join(list(response.json().keys())))
-        return
+        return None, 0
 
     # print raw json
     if args.raw:
         print(response.text)
-        return
+        return None, 0
 
     # print full table
     import pandas as pd
@@ -100,34 +115,10 @@ def _print_results(args, response):
     df = pd.DataFrame(response.json().values())
     if df.empty:
         print("No results")
-        return
+        return None, 0
     df["tags"] = df["tags"].apply(lambda x: ",".join(x))
     df["title"] = df["title"].apply(
         lambda x: " ".join([w.capitalize() for w in x.split("_")])
     )
     print(df[["_id", "date", "title", "tags"]].to_string(header=args.Q))
-
-
-def _run(doc, args):
-    import requests
-
-    # Get query
-    query = _args_to_query(args)
-
-    # Get url
-    url = f"{doc.server_url}/query"
-
-    # Get results
-    try:
-        response = requests.get(url, json=query)
-    except:
-        print(f"Failed to connect to {url}")
-        exit(1)
-    if response.status_code != 200:
-        print(f"Failed to connect to backend! (code {response.status_code})")
-        print(response.text)
-        exit(1)
-
-    # Print
-    _print_results(args, response)
-    exit(0)  # no need to save
+    return None, 0

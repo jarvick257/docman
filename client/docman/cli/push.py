@@ -34,7 +34,7 @@ def _run(doc, args):
             print(
                 "Make sure you have at least one scan, one ore more tags and a title."
             )
-            exit(1)
+            return None, 1
         if doc.ocr is None:
             ocr_args = namedtuple("fake_args", ("lang", "max_jobs"))(None, 4)
             doc = ocr(doc, ocr_args)
@@ -50,10 +50,10 @@ def _run(doc, args):
         ):
             print("Document is not ready to be pushed!")
             print("Required attributes: id, tags, title, date, ocr")
-            exit(1)
+            return None, 1
     else:
         print(f"Unrecognized mode: {mode}")
-        exit(1)
+        return None, 1
 
     # Prepare post
     post = dict(title=doc.title, date=doc.date, tags=doc.tags, ocr=doc.ocr)
@@ -83,7 +83,7 @@ def _run(doc, args):
         fake_args = namedtuple("Args", "hard")(True)
         doc = reset(doc, fake_args)
         print("Push successful")
-        return doc
+        return doc, 0
     else:
         print(f"Push failed with code {r.status_code}: {r.text}")
-        exit(1)
+        return None, 1

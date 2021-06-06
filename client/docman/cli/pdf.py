@@ -11,11 +11,11 @@ def _run(doc, args):
 
     if doc.scans == []:
         print("No scans!")
-        exit(1)
+        return None, 1
     source_files = " ".join(doc.scans)
     output = os.path.join(doc.wd, "combined.pdf")
     cmd = f"convert {source_files} {output}"
     print(cmd)
     os.system(cmd)
     doc.pdf = output
-    return doc
+    return doc, 0
