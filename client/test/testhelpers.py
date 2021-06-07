@@ -16,6 +16,7 @@ class RequestsMock:
         self.last_post_rq = (None, None, None)
         self.get_response = deque()
         self.post_response = deque()
+        self.urlretrieve_requests = []
 
     def get(self, *args, **kwargs):
         url = args[0]
@@ -45,6 +46,9 @@ class RequestsMock:
         r.status_code = code
         r._content = txt.encode()
         self.post_response.append(r)
+
+    def urlretrieve(self, url, filename):
+        self.urlretrieve_requests.append((url, filename))
 
 
 @contextmanager

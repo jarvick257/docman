@@ -18,7 +18,6 @@ def _run(doc, args):
     import urllib.request
 
     from docman import Document
-    from progress.bar import Bar
 
     # don't overwrite existing document
     if doc.is_wip():
@@ -30,7 +29,11 @@ def _run(doc, args):
         return None, 1
 
     # get document info
-    response = requests.get(f"{doc.server_url}/query", json=dict(id=args.id))
+    try:
+        response = requests.get(f"{doc.server_url}/query", json=dict(id=args.id))
+    except:
+        print(f"Failed to connect to {doc.server_url}/query")
+        return None, 1
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
         return None, 1
@@ -45,6 +48,7 @@ def _run(doc, args):
 
     # for edit only, we're done. Otherwise we need to download some files, too
     if args.update:
+        print(doc._id)
         return doc, 0
 
     # create file list as tuple (url, save path)
@@ -52,9 +56,13 @@ def _run(doc, args):
     for scan in meta["scans"]:
         files.append((f"{doc.server_url}/scan/{scan}", scan))
     # Download files
-    bar = Bar("Checking out files", max=len(files))
+    N = len(files)
+    max_strlen = 0
     for i, (url, path) in enumerate(files):
-        bar.next()
+        s = f"\rDownloading {i+1}/{N}"
+        max_strlen = max(len(s), max_strlen)
+        print(s, end="")
         urllib.request.urlretrieve(url, filename=os.path.join(doc.wd, path))
-    bar.finish()
+    padding = max_strlen - len(doc._id)
+    print("\r" + doc._id + " " * padding)
     return doc, 0
