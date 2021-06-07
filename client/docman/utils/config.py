@@ -14,6 +14,7 @@ def _create_default_config():
     config["SERVER"] = {"address": "localhost", "port": "8123"}
     config["INTEGRATION"] = {
         "scan": "scanimage --device airscan:w0:HP --format jpg --output-file {file} --progress",
+        "pdf_conversion": "convert {source_files} {output}",
         "image_preview": "feh",
         "pdf_preview": os.environ.get("BROWSER", "firefox"),
     }
