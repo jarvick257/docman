@@ -22,7 +22,10 @@ class RequestsMock:
         data = kwargs.get("json", None)
         files = kwargs.get("files", None)
         self.last_get_rq = (url, data, files)
-        return self.get_response.popleft()
+        r = self.get_response.popleft()
+        if not isinstance(r.status_code, int):
+            raise r.status_code
+        return r
 
     def post(self, *args, **kwargs):
         url = args[0]

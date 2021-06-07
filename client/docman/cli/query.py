@@ -88,14 +88,13 @@ def _run(doc, args):
 
     # Get results
     try:
-        print(requests.get)
         response = requests.get(url, json=query)
     except:
         print(f"Failed to connect to {url}")
         return None, 1
     if response.status_code != 200:
         print(f"Failed to connect to backend! (code {response.status_code})")
-        print(response.text)
+        # print(response.text)
         return None, 1
 
     # Print

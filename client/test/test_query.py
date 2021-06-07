@@ -1,4 +1,5 @@
 from collections import namedtuple
+import json
 import requests
 import pytest
 
@@ -23,13 +24,16 @@ def args(**kwargs):
     )
 
 
-def test_query_noarg(with_test_config):
+def test_query_noarg(capfd, with_test_config):
     doc = docman.Document.load({})
     mock = RequestsMock()
     requests.get = mock.get
     mock.set_get_response("{}", 200)
     assert _run(doc, args()) == (None, 0)
     assert mock.last_get_rq == ("http://localhost:8123/query", {}, None)
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == "No results\n"
 
 
 def test_query_args(with_test_config):
@@ -75,3 +79,67 @@ def test_query_wrong_date(capfd, with_test_config):
     out, err = capfd.readouterr()
     assert err == ""
     assert out == "Date must be in YYYY-MM-DD format.\n"
+
+
+def test_query_failed(capfd, with_test_config):
+    # Retval
+    doc = docman.Document.load({})
+    mock = RequestsMock()
+    requests.get = mock.get
+    mock.set_get_response("{}", 201)
+    assert _run(doc, args()) == (None, 1)
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == "Failed to connect to backend! (code 201)\n"
+
+    # exception
+    doc = docman.Document.load({})
+    mock = RequestsMock()
+    requests.get = mock.get
+    mock.set_get_response("{}", requests.exceptions.ConnectionError)
+    assert _run(doc, args()) == (None, 1)
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == "Failed to connect to http://localhost:8123/query\n"
+
+
+def test_query_short(capfd, with_test_config):
+    doc = docman.Document.load({})
+    mock = RequestsMock()
+    requests.get = mock.get
+    result = dict(one=dict(), two=dict())
+    mock.set_get_response(json.dumps(result), 200)
+    assert _run(doc, args(short=True)) == (None, 0)
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == "one\ntwo\n"
+
+
+def test_query_raw(capfd, with_test_config):
+    doc = docman.Document.load({})
+    mock = RequestsMock()
+    requests.get = mock.get
+    result = dict(one=dict(), two=dict())
+    mock.set_get_response(json.dumps(result), 200)
+    assert _run(doc, args(raw=True)) == (None, 0)
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == json.dumps(result) + "\n"
+
+
+def test_query_table(capfd, with_test_config):
+    doc = docman.Document.load({})
+    mock = RequestsMock()
+    requests.get = mock.get
+    result = dict(
+        one=dict(tags=["a", "b"], title="one", _id="idone", date="dateone"),
+        two=dict(tags=["c", "d"], title="two", _id="idtwo", date="datetwo"),
+    )
+    mock.set_get_response(json.dumps(result), 200)
+    assert _run(doc, args()) == (None, 0)
+    out, err = capfd.readouterr()
+    assert err == ""
+    out = out.split("\n")
+    assert out[0] == "     _id     date title tags"
+    assert out[1] == "0  idone  dateone   One  a,b"
+    assert out[2] == "1  idtwo  datetwo   Two  c,d"
