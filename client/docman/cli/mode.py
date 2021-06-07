@@ -39,4 +39,5 @@ def _run(doc, args):
             "Error: When choosing a mode other than 'add', an existing document id is required!"
         )
         return None, 1
+    print(doc.mode)
     return doc, 0
