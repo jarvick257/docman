@@ -1,4 +1,4 @@
-# docman
+# docman ![Build Status](https://github.com/jarvick257/docman/actions/workflows/client.yml/badge.svg?branch=develop)
 Docman - a scriptable, git inspired document management system featuring document tags, full text search and a web-based front end for searching the database.
 
 # TODO
