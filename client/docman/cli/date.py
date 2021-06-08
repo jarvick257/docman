@@ -4,9 +4,8 @@ def date(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import datetime as dt
-    from docman import Document
 
     try:
         # try converting to date to check format
@@ -14,10 +13,9 @@ def _run(args):
         # fromisoformat only available in python3.7
         # new_date = str(dt.date.fromisoformat(new_date))
         new_date = str(dt.datetime.strptime(new_date, "%Y-%m-%d").date())
-        print(f"Set document date to {new_date}")
     except ValueError:
         print("Date must be in YYYY-MM-DD format.")
-        exit(1)
-    doc = Document.load()
+        return None, 1
     doc.date = new_date
-    doc.save()
+    print(doc.date)
+    return doc, 0

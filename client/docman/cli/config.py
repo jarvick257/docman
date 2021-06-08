@@ -9,7 +9,7 @@ def config(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
 
     if "EDITOR" in os.environ:
@@ -18,3 +18,4 @@ def _run(args):
         print("EDITOR environment variable not set. Falling back to vi.")
         editor = "vi"
     os.system(f"{editor} {get_config_path()}")
+    return None, 0

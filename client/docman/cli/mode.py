@@ -20,10 +20,7 @@ def mode(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
-    from docman import Document
-
-    doc = Document.load()
+def _run(doc, args):
     doc.mode = args.mode
 
     if args.id:
@@ -41,7 +38,6 @@ def _run(args):
         print(
             "Error: When choosing a mode other than 'add', an existing document id is required!"
         )
-        exit(1)
-
-    # :wq
-    doc.save()
+        return None, 1
+    print(doc.mode)
+    return doc, 0

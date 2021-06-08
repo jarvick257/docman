@@ -11,18 +11,14 @@ def checkout(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
     import json
     import requests
     import urllib.request
 
-    from progress.bar import Bar
-
     from docman import Document
-    from docman.utils import get_server_url
 
-    doc = Document.load()
     # don't overwrite existing document
     if doc.is_wip():
         print(
@@ -30,14 +26,17 @@ def _run(args):
             "Push current document with 'docman push' or discard everything with "
             "'docman reset --hard'"
         )
-        exit(1)
+        return None, 1
 
     # get document info
-    url = get_server_url()
-    response = requests.get(f"{url}/query", json=dict(id=args.id))
+    try:
+        response = requests.get(f"{doc.server_url}/query", json=dict(id=args.id))
+    except:
+        print(f"Failed to connect to {doc.server_url}/query")
+        return None, 1
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
-        exit(1)
+        return None, 1
 
     # Create document
     meta = response.json()[args.id]
@@ -46,19 +45,24 @@ def _run(args):
     doc.pdf = os.path.join(doc.wd, "combined.pdf")
     doc.scans = [os.path.join(doc.wd, scan) for scan in doc.scans]
     doc.mode = "update" if args.update else "replace"
-    doc.save()
 
     # for edit only, we're done. Otherwise we need to download some files, too
     if args.update:
-        exit(0)
+        print(doc._id)
+        return doc, 0
 
     # create file list as tuple (url, save path)
-    files = [(f"{url}/pdf/{meta['pdf']}", "combined.pdf")]
+    files = [(f"{doc.server_url}/pdf/{meta['pdf']}", "combined.pdf")]
     for scan in meta["scans"]:
-        files.append((f"{url}/scan/{scan}", scan))
+        files.append((f"{doc.server_url}/scan/{scan}", scan))
     # Download files
-    bar = Bar("Checking out files", max=len(files))
+    N = len(files)
+    max_strlen = 0
     for i, (url, path) in enumerate(files):
-        bar.next()
+        s = f"\rDownloading {i+1}/{N}"
+        max_strlen = max(len(s), max_strlen)
+        print(s, end="")
         urllib.request.urlretrieve(url, filename=os.path.join(doc.wd, path))
-    bar.finish()
+    padding = max_strlen - len(doc._id)
+    print("\r" + doc._id + " " * padding)
+    return doc, 0

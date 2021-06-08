@@ -23,18 +23,21 @@ def pull(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
     import requests
     import urllib.request
-    from docman.utils import get_server_url
 
     # get document info
-    url = get_server_url()
-    response = requests.get(f"{url}/query", json=dict(id=args.id))
+    url = doc.server_url
+    try:
+        response = requests.get(f"{url}/query", json=dict(id=args.id))
+    except:
+        print(f"Failed to connect to {url}/query")
+        return None, 1
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
-        exit(1)
+        return None, 1
     meta = response.json()[args.id]
 
     # Create file list
@@ -52,3 +55,4 @@ def _run(args):
     for i, (url, path) in enumerate(files):
         print(f"Downloading {i+1}/{len(files)}: {path}")
         urllib.request.urlretrieve(url, filename=path)
+    return None, 0

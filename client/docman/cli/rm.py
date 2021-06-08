@@ -16,18 +16,17 @@ def rm(subparser):
     parser.set_defaults(function=_run)
 
 
-def _run(args):
+def _run(doc, args):
     import os
     import json
     import requests
-    from docman.utils import get_server_url
 
-    url = get_server_url()
+    url = doc.server_url
 
     # Check ids
     ids = []
     num_scans = 0
-    for _id in set(args.ids):
+    for _id in sorted(set(args.ids)):  # sorted only needed for unittests
         # get document info
         response = requests.get(f"{url}/query", json=dict(id=_id))
         if response.status_code != 200 or response.json() == {}:
@@ -39,20 +38,23 @@ def _run(args):
 
     if len(ids) == 0:
         print("Nothing to delete.")
-        exit(0)
+        return None, 0
 
     # Ask for confirmation
-    pl = "s" if len(ids) > 1 else ""
-    print(f"You are about to delete {len(ids)} document{pl} ({num_scans} scan{pl}).")
+    pl = lambda x: "s" if x != 1 else ""
+    print(
+        f"You are about to delete {len(ids)} document{pl(len(ids))} ({num_scans} scan{pl(num_scans)})."
+    )
     if not args.noconfirm:
         r = input("If you wish to continue, please type yes: ")
         if r.lower() != "yes":
             print("Aborting...")
-            exit(1)
+            return None, 1
 
     # Delete
     r = requests.post(f"{url}/remove", json=dict(ids=ids))
     if r.status_code != 201:
         print(f"Remove failed with code {r.status_code}: {r.text}")
-        exit(1)
-    print(f"Successfully removed {len(ids)} documents")
+        return None, 1
+    print(f"Successfully removed {len(ids)} document{pl(len(ids))}")
+    return None, 0
