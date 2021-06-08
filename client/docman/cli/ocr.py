@@ -43,7 +43,6 @@ def _ocr_worker(job_q, result_q):
 def _run(doc, args):
     import datetime as dt
     from multiprocessing import Process, Queue
-    from progress.bar import Bar
 
     lang = args.lang or doc.config["DEFAULT"]["default_language"]
     text = set()
@@ -60,9 +59,9 @@ def _run(doc, args):
     [job_q.put((None, None)) for _ in workers]
 
     try:
-        # bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
+        N = len(doc.scans)
         for i in range(len(doc.scans)):
-            # bar.next()
+            print(f"{i+1}/N", end="\r")
             words = result_q.get()
             for word in words:
                 text.add(word)
@@ -70,9 +69,8 @@ def _run(doc, args):
         [worker.terminate() for worker in workers]
         print("Caught keyboard interrupt. Stopping workers...")
     finally:
-        # bar.finish()
         [worker.join() for worker in workers]
 
-    print(f"{len(text)}")
+    print(f"{len(text)}" + " " * 10)
     doc.ocr = " ".join(sorted(text))
     return doc, 0
