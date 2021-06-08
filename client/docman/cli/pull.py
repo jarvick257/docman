@@ -30,7 +30,11 @@ def _run(doc, args):
 
     # get document info
     url = doc.server_url
-    response = requests.get(f"{url}/query", json=dict(id=args.id))
+    try:
+        response = requests.get(f"{url}/query", json=dict(id=args.id))
+    except:
+        print(f"Failed to connect to {url}/query")
+        return None, 1
     if response.status_code != 200 or response.json() == {}:
         print(f"Didn't find any document for id {args.id}")
         return None, 1
