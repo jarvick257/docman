@@ -11,7 +11,7 @@ from collections import deque
 
 class RequestsMock:
     def __init__(self):
-        # URL, data, files
+        # URL, json, files
         self.last_get_rq = (None, None, None)
         self.last_post_rq = (None, None, None)
         self.get_response = deque()
@@ -20,9 +20,9 @@ class RequestsMock:
 
     def get(self, *args, **kwargs):
         url = args[0]
-        data = kwargs.get("json", None)
+        json = kwargs.get("json", None)
         files = kwargs.get("files", None)
-        self.last_get_rq = (url, data, files)
+        self.last_get_rq = (url, json, files)
         r = self.get_response.popleft()
         if not isinstance(r.status_code, int):
             raise r.status_code
@@ -30,10 +30,13 @@ class RequestsMock:
 
     def post(self, *args, **kwargs):
         url = args[0]
-        data = kwargs.get("json", None)
+        json = kwargs.get("json", None)
         files = kwargs.get("files", None)
-        self.last_post_rq = (url, data, files)
-        return self.post_response.popleft()
+        self.last_post_rq = (url, json, files)
+        r = self.post_response.popleft()
+        if not isinstance(r.status_code, int):
+            raise r.status_code
+        return r
 
     def set_get_response(self, txt, code):
         r = requests.Response()

@@ -57,6 +57,23 @@ class Document:
             and self.title is None
         )
 
+    def is_complete(self):
+        if self.mode == "add":
+            return self.tags and self.title and self.pdf and self.date and self.ocr
+        elif self.mode == "replace":
+            return (
+                self.tags
+                and self.title
+                and self.pdf
+                and self.date
+                and self.ocr
+                and self._id
+            )
+        elif self.mode == "update":
+            return self.tags and self.title and self.date and self.ocr and self._id
+        else:
+            return False
+
     def cleanup(self):
         for f in glob.glob(os.path.join(self.wd, "*")):
             if not os.path.isfile(f):
