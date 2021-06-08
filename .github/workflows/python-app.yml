@@ -36,4 +36,4 @@ jobs:
     - name: Test with pytest
       working-directory: ./client
       run: |
-        ./test.sh
+          pytest

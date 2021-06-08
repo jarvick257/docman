@@ -25,7 +25,7 @@ def _ocr_worker(job_q, result_q):
     import pytesseract
     import re
 
-    punct = "[.,!?;:\r\t\n\[\]\(\)]"
+    punct = r"[.,!?;:\r\t\n\[\]\(\)]"
 
     while True:
         file, lang = job_q.get()
@@ -35,7 +35,7 @@ def _ocr_worker(job_q, result_q):
         # clean stop characters
         txt = re.sub(punct, " ", txt)
         # clean whitespace
-        txt = re.sub("\s+", " ", txt).strip()
+        txt = re.sub(r"\s+", " ", txt).strip()
         words = sorted(set(txt.split(" ")))
         result_q.put(words)
 
