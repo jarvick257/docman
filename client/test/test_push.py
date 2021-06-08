@@ -40,7 +40,7 @@ def test_push_add_replace(with_test_config):
             else:
                 mock.set_post_response("OK", 201)
             doc, retval = _run(doc, None)
-            assert mock.last_post_rq is not (None, None, None)
+            assert mock.last_post_rq != (None, None, None)
             assert mock.last_post_rq[0] == f"http://localhost:8123/{mode}"
             assert mock.last_post_rq[1] is None
             assert len(mock.last_post_rq[2]) == 4
@@ -74,7 +74,7 @@ def test_push_update(with_test_config):
         else:
             mock.set_post_response("OK", 201)
         doc, retval = _run(doc, None)
-        assert mock.last_post_rq is not (None, None, None)
+        assert mock.last_post_rq != (None, None, None)
         assert mock.last_post_rq[0] == "http://localhost:8123/update"
         assert mock.last_post_rq[2] is None
         post = mock.last_post_rq[1]
