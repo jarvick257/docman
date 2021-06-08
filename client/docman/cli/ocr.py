@@ -23,20 +23,20 @@ def ocr(subparser):
 
 def _ocr_worker(job_q, result_q):
     import pytesseract
+    import re
+
+    punct = "[.,!?;:\r\t\n\[\]\(\)]"
 
     while True:
         file, lang = job_q.get()
         if file is None:
             break
         txt = pytesseract.image_to_string(file, lang=lang)
-        txt = txt.replace("\n", " ")
-        txt = txt.replace(".", " ")
-        txt = txt.replace("!", " ")
-        txt = txt.replace("?", " ")
-        txt = txt.replace(",", " ")
-        txt = txt.replace(";", " ")
-        txt = txt.replace(":", " ")
-        words = set(txt.split(" "))
+        # clean stop characters
+        txt = re.sub(punct, " ", txt)
+        # clean whitespace
+        txt = re.sub("\s+", " ", txt).strip()
+        words = sorted(set(txt.split(" ")))
         result_q.put(words)
 
 
@@ -45,8 +45,7 @@ def _run(doc, args):
     from multiprocessing import Process, Queue
     from progress.bar import Bar
 
-    if args.lang is None:
-        args.lang = doc.config["DEFAULT"]["default_language"]
+    lang = args.lang or doc.config["DEFAULT"]["default_language"]
     text = set()
     result_q = Queue()
     job_q = Queue()
@@ -55,23 +54,25 @@ def _run(doc, args):
         for _ in range(min(args.max_jobs, len(doc.scans)))
     ]
     [worker.start() for worker in workers]
-    [job_q.put((scan, args.lang)) for _ in doc.scans]
+    print(min(args.max_jobs, len(doc.scans)))
+    print(len(workers))
+    [job_q.put((scan, lang)) for scan in doc.scans]
     [job_q.put((None, None)) for _ in workers]
 
     try:
-        bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
+        # bar = Bar(f"Analyzing {len(doc.scans)} documents", max=len(doc.scans))
         for i in range(len(doc.scans)):
-            bar.next()
+            # bar.next()
             words = result_q.get()
             for word in words:
-                text.add(word.strip())
+                text.add(word)
     except KeyboardInterrupt:
         [worker.terminate() for worker in workers]
         print("Caught keyboard interrupt. Stopping workers...")
     finally:
-        bar.finish()
+        # bar.finish()
         [worker.join() for worker in workers]
 
     print(f"Found {len(text)} unique words")
-    doc.ocr = " ".join(text)
+    doc.ocr = " ".join(sorted(text))
     return doc, 0
