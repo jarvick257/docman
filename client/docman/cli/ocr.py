@@ -73,6 +73,6 @@ def _run(doc, args):
         # bar.finish()
         [worker.join() for worker in workers]
 
-    print(f"Found {len(text)} unique words")
+    print(f"{len(text)}")
     doc.ocr = " ".join(sorted(text))
     return doc, 0

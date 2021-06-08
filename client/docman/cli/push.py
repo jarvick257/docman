@@ -1,8 +1,7 @@
 def push(subparser):
     parser = subparser.add_parser(
         "push",
-        description="""Pushes the current working state to the docman server and resets. """
-        """If push is called before pdf or ocr, these steps will be automatically performed using default arguments. """,
+        description="""Pushes the current working state to the docman server and resets. """,
     )
     parser.set_defaults(function=_run)
 
