@@ -12,7 +12,7 @@ def _run(doc, args):
         new_date = "-".join(args.date).replace(" ", "-")
         # fromisoformat only available in python3.7
         # new_date = str(dt.date.fromisoformat(new_date))
-        new_date = str(dt.datetime.strptime(new_date, "%Y-%m-%d").date())
+        new_date = dt.datetime.strptime(new_date, "%Y-%m-%d").date()
     except ValueError:
         print("Date must be in YYYY-MM-DD format.")
         return None, 1

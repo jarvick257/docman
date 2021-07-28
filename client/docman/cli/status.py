@@ -14,6 +14,7 @@ def default_action(doc, args):
 
 
 def _run(doc, args):
+    import os
 
     if args.full_ocr:
         ocr_str = doc.ocr
@@ -34,11 +35,12 @@ def _run(doc, args):
         mode = doc.mode
     else:
         mode = f"{doc.mode} {doc._id}"
-    print(f"Mode:  {mode}")
-    print(f"Title: {doc.title}")
-    print(f"Date:  {doc.date}")
-    print(f"Tags:  {'None' if doc.tags == [] else ' '.join(doc.tags)}")
-    print(f"Scans: {len(doc.scans)}")
-    print(f"Ocr:   {ocr_str}")
-    print(f"Pdf:   {'Yes' if doc.pdf else 'No'}")
+    print(f"Mode:   {mode}")
+    print(f"Title:  {doc.title}")
+    print(f"Date:   {doc.date.date()}")
+    print(f"Tags:   {'None' if doc.tags == [] else ' '.join(doc.tags)}")
+    print(f"Inputs: {len(doc.input_files)}")
+    for i in doc.input_files:
+        print(f"    - {os.path.basename(i)}")
+    print(f"Pdf:    {'Yes' if doc.pdf else 'No'}")
     return None, 0

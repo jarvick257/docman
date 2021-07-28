@@ -19,5 +19,5 @@ def _run(doc, args):
 
     doc = Document.load({})
     if not args.hard:
-        doc.scans = sorted(glob.glob(os.path.join(doc.wd, "*.jpg")))
+        doc.input_files = sorted(glob.glob(os.path.join(doc.wd, "*.jpg")))
     return doc, 0
