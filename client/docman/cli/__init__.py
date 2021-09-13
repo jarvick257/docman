@@ -1,16 +1,37 @@
-from .status import status, default_action
-from .scan import scan
-from .title import title
-from .pdf import pdf
-from .preview import preview
-from .config import config
-from .tag import tag
-from .reset import reset
-from .date import date
-from .ocr import ocr
-from .push import push
-from .query import query
-from .checkout import checkout
-from .pull import pull
-from .rm import rm
-from .mode import mode
+from .status import Status
+from .scan import Scan
+from .title import Title
+from .pdf import Pdf
+from .preview import Preview
+from .config import Config
+from .tag import Tag
+from .reset import Reset
+from .date import Date
+from .ocr import Ocr
+from .push import Push
+from .query import Query
+from .checkout import Checkout
+from .pull import Pull
+from .rm import Rm
+from .mode import Mode
+
+COMMANDS = [
+    Status,
+    Scan,
+    Title,
+    Pdf,
+    Preview,
+    Config,
+    Tag,
+    Reset,
+    Date,
+    Ocr,
+    Push,
+    Query,
+    Checkout,
+    Pull,
+    Rm,
+    Mode,
+]
+
+DEFAULT = Status

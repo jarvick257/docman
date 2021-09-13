@@ -22,10 +22,12 @@ class Document:
 
     @classmethod
     def load(cls, meta=None):
-        doc = Document()
+        doc = cls()
         doc.config = get_config()
         doc.wd = doc.config["DEFAULT"]["working_dir"]
         doc.path = os.path.join(doc.wd, "meta.json")
+        if not os.path.isdir(doc.wd):
+            os.makedirs(doc.wd)
         if meta is None:
             try:
                 with open(doc.path) as fp:
@@ -86,8 +88,6 @@ class Document:
 
     def save(self):
         meta = self.to_dict()
-        if not os.path.isdir(self.wd):
-            os.makedirs(self.wd)
         with open(self.path, "w") as fp:
             json.dump(meta, fp)
 
