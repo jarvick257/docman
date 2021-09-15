@@ -138,7 +138,7 @@ def serve_thumbnail(image):
 def serve_scan(image):
     path = os.path.join(utils.archive(), ".scans")
     if not os.path.isfile(os.path.join(path, image)):
-        return "Documnet not found!", 404
+        return "Document not found!", 404
     return send_from_directory(path, image)
 
 

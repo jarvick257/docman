@@ -21,19 +21,19 @@ def test_checkout_update(capfd):
     doc = docman.Document.load({})
     mock = RequestsMock()
     requests.get = mock.get
-    response = dict(some_id=dict(_id="some_id", date="some_date", tags=[1, 2, 3]))
+    response = dict(some_id=dict(_id="some_id", date="2021-01-01", tags=[1, 2, 3]))
     mock.set_get_response(json.dumps(response), 200)
     doc, retval = _run(doc, args(id="some_id", update=True))
     assert doc._id == "some_id"
     assert doc.mode == "update"
-    assert doc.date == "some_date"
+    assert doc.date == "2021-01-01"
     assert doc.tags == [1, 2, 3]
     assert capfd.readouterr() == ("some_id\n", "")
 
 
 def test_checkout_iswip(capfd):
     doc = docman.Document.load({})
-    doc.scans = [1]
+    doc.input_files = [1]
     assert _run(doc, args(id="some_id", update=True)) == (None, 1)
 
 
@@ -74,7 +74,9 @@ def test_checkout_full(capfd, with_test_config):
     requests.get = mock.get
     urllib.request.urlretrieve = mock.urlretrieve
     response = dict(
-        some_id=dict(_id="some_id", pdf="some_pdf", scans=["one", "two"], tags=[1, 2])
+        some_id=dict(
+            _id="some_id", pdf="some_pdf", input_files=["one", "two"], tags=[1, 2]
+        )
     )
     mock.set_get_response(json.dumps(response), 200)
     doc, retval = _run(doc, args(id="some_id"))
@@ -98,6 +100,6 @@ def test_checkout_full(capfd, with_test_config):
     )
     assert doc._id == "some_id"
     assert doc.tags == [1, 2]
-    assert doc.scans == ["/tmp/test_docman/one", "/tmp/test_docman/two"]
+    assert doc.input_files == ["/tmp/test_docman/one", "/tmp/test_docman/two"]
     assert doc.pdf == "/tmp/test_docman/combined.pdf"
     assert doc.mode == "replace"

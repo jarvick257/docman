@@ -1,6 +1,7 @@
 import json
 from collections import namedtuple
-
+import datetime as dt
+import pdb
 import pytest
 
 import docman
@@ -20,8 +21,8 @@ def get_default_doc():
     doc.tags = ["alpha", "omega"]
     doc.title = "some_title"
     doc.ocr = "this is some ocr"
-    doc.scans = [1, 2, 3]
-    doc.date = "some date"
+    doc.input_files = ["some", "input", "files"]
+    doc.date = dt.datetime.now()
     doc.pdf = "some pdf"
     doc.mode = "add"
     doc._id = "some id"
@@ -34,13 +35,15 @@ def test_status_noarg(capfd):
     out, err = capfd.readouterr()
     assert err == ""
     out = out.split("\n")
-    assert out[0] == "Mode:  add"
-    assert out[1] == "Title: some_title"
-    assert out[2] == "Date:  some date"
-    assert out[3] == "Tags:  alpha omega"
-    assert out[4] == "Scans: 3"
-    assert out[5] == "Ocr:   4 words"
-    assert out[6] == "Pdf:   Yes"
+    assert out[0] == "Mode:   add"
+    assert out[1] == "Title:  some_title"
+    assert out[2] == f"Date:   {dt.date.today()}"
+    assert out[3] == "Tags:   alpha omega"
+    assert out[4] == "Inputs: 3"
+    assert out[5] == "    - some"
+    assert out[6] == "    - input"
+    assert out[7] == "    - files"
+    assert out[8] == "Pdf:    Yes"
 
 
 def test_status_mode(capfd):
@@ -60,22 +63,6 @@ def test_status_mode(capfd):
     capfd.readouterr()[0].split("\n")[0] == "Mode:  edit some id"
 
 
-def test_status_ocr(capfd):
-    doc = get_default_doc()
-    assert _run(doc, args(full_ocr=True)) == (None, 0)
-    assert capfd.readouterr()[0].split("\n")[5] == "Ocr:   this is some ocr"
-
-    doc = get_default_doc()
-    doc.ocr = None
-    assert _run(doc, args()) == (None, 0)
-    assert capfd.readouterr()[0].split("\n")[5] == "Ocr:   0 words"
-
-    doc = get_default_doc()
-    doc.ocr = None
-    assert _run(doc, args(full_ocr=True)) == (None, 0)
-    assert capfd.readouterr()[0].split("\n")[5] == "Ocr:   None"
-
-
 def test_status_json(capfd):
     doc = get_default_doc()
     assert _run(doc, args(json=True)) == (None, 0)
@@ -84,12 +71,13 @@ def test_status_json(capfd):
         tags=["alpha", "omega"],
         title="some_title",
         ocr="4 words",
-        scans=[1, 2, 3],
-        date="some date",
+        input_files=["some", "input", "files"],
+        date=str(dt.date.today()),
         pdf="some pdf",
         mode="add",
         _id="some id",
     )
+    # pdb.set_trace()
     assert err == ""
     assert json.loads(out) == d
 

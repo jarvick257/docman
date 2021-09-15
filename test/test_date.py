@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import date
 
 import pytest
 
@@ -16,7 +17,7 @@ def test_date_simple(capfd):
     assert doc.date is None
     doc, retval = _run(doc, args(date=["2021-01-01"]))
     assert retval == 0
-    assert doc.date == "2021-01-01"
+    assert doc.date == date(2021, 1, 1)
     assert capfd.readouterr() == ("2021-01-01\n", "")
 
 
@@ -25,7 +26,7 @@ def test_date_multiple(capfd):
     assert doc.date is None
     doc, retval = _run(doc, args(date=["2021", "01", "01"]))
     assert retval == 0
-    assert doc.date == "2021-01-01"
+    assert doc.date == date(2021, 1, 1)
     assert capfd.readouterr() == ("2021-01-01\n", "")
 
 
