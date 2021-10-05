@@ -21,7 +21,7 @@ class Mode:
         parser.set_defaults(function=cls.run)
 
     @classmethod
-    def run(cls, doc, mode: str, _id=None):
+    def run(cls, doc, mode: str, _id=None, **kwargs):
         doc.mode = mode
 
         if _id:

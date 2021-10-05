@@ -5,6 +5,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import fitz
+from pdfrw import PdfReader
 import io
 from PIL import Image
 
@@ -90,10 +91,10 @@ def db_delete(_id_str: str):
     if doc is None or doc == {}:
         logger.error("Document doesn't exist")
         return f"No such document {_id}", 404
-    # delete files
-    os.remove(archive(doc["pdf"]))
     # delte db entry
     db.delete_one(query)
+    # delete files
+    os.remove(archive(doc["pdf"]))
     return "OK", 201
 
 
@@ -146,3 +147,19 @@ def get_thumbnail(thumb_name: str):
         logger.debug(f"Creating {thumb_name} from {pdf_name}")
         _create_thumbnail(archive(pdf_name), thumb_path)
     return thumb_dir, thumb_name
+
+
+def read_pdfa(pdf_path):
+    doc = PdfReader(pdf_path)
+    title = doc.Info.Title.decode()
+    tags = doc.Info.Keywords.decode().split(":")
+    time = doc.Info.CreationDate.decode().split(":")[-1]
+    time = time.replace("'", "")
+    time = datetime.strptime(time, "%Y%m%d%H%M%S%z").replace(tzinfo=None)
+    filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
+    try:
+        text = check_output(["pdftotext", pdf_path, "/dev/stdout"])
+        text = text.decode().strip().replace("\n", " ").replace("  ", " ")
+    except:
+        text = None
+    return title, time, tags, text, filename

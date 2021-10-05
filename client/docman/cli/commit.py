@@ -14,12 +14,9 @@ class Commit:
         from pdfrw import PdfReader, PdfWriter
         from tzlocal import get_localzone
 
-        if len(doc.input_files) == 0:
-            print("No input files!")
-            return None, 1
-        elif len(doc.input_files) > 1 or not doc.input_files[0].endswith(".pdf"):
-            # Convert/combine input files to pdf first
-            print("Create single pdf from input files")
+        if len(doc.input_files) > 1:
+            # Convert/combine image files to pdf first
+            print("Creating single pdf from input files")
             inputs = " ".join(doc.input_files)
             output = os.path.join(doc.wd, "combined.pdf")
             cmd = ["img2pdf", "--pagesize", "A4", "-o", output] + doc.input_files
@@ -27,39 +24,44 @@ class Commit:
                 sp.check_call(cmd)
             except sp.CalledProcessError as e:
                 print(f"{' '.join(cmd)} failed with return value {e.args[0]}!")
-                return None, 1
+                return 1
             except:
                 print(f"{' '.join(cmd)} failed!")
-                return None, 1
+                return 1
             input_file = output
-        else:
+        elif len(doc.input_files) == 1 and doc.input_files[0].endswith(".pdf"):
+            # pdf as input
             input_file = doc.input_files[0]
+        else:
+            print("Unsupported input!")
+            print("Must have either multiple image files or a single pdf as input.")
+            return 1
 
         print("Calling OcrMyPdf")
 
         output = os.path.join(doc.wd, "combined.pdf")
-        ocr = os.path.join(doc.wd, "ocr.txt")
         cmd = [
             "ocrmypdf",
-            "-l",
-            "deu",
             "--title",
             doc.title,
             "--keywords",
             ":".join(doc.tags),
-            "--sidecar",
-            ocr,
             "--output-type",
             "pdfa",
             input_file,
             output,
         ]
+        if not doc.ocr:
+            doc.ocr = os.path.join(doc.wd, "ocr.txt")
+            cmd += ["-l", "deu", "--sidecar", doc.ocr]
+        else:
+            cmd += ["--skip-text"]
+
         try:
             sp.check_call(cmd)
         except:
             print(f"OcrMyPdf Failed!")
-            return None, 1
-        doc.ocr = ocr
+            return 1
         doc.pdf = output
         t = doc.date.replace(tzinfo=get_localzone())
         t = t.strftime("%Y%m%d%H%M%S%z")

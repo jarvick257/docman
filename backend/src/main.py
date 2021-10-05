@@ -15,7 +15,6 @@ from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
 from layout import layout, update_preview_grid, show_document
-from pdfrw import PdfReader
 import utils
 
 server = Flask("Docman")
@@ -140,14 +139,6 @@ def serve_thumbnail(image):
     return send_from_directory(path, image)
 
 
-@server.route("/scan/<image>")
-def serve_scan(image):
-    path = utils.archive(".scans")
-    if not os.path.isfile(os.path.join(path, image)):
-        return "Document not found!", 404
-    return send_from_directory(path, image)
-
-
 @server.route("/pdf/<document>")
 def serve_pdf(document):
     if not os.path.isfile(utils.archive(document)):
@@ -163,19 +154,8 @@ def on_add():
     tmp_path = "/tmp/newdoc.pdf"
     pdf.save(tmp_path)
     # Extract data
-    doc = PdfReader(tmp_path)
-    title = doc.Info.Title.decode()
-    tags = doc.Info.Keywords.decode().split(":")
-    time = doc.Info.CreationDate.decode().split(":")[-1]
-    time = time.replace("'", "")
-    time = datetime.strptime(time, "%Y%m%d%H%M%S%z").replace(tzinfo=None)
-    try:
-        text = check_output(["pdftotext", tmp_path, "/dev/stdout"])
-    except:
-        return "Failed to check text!", 500
-    text = text.decode().strip().replace("\n", " ").replace("  ", " ")
+    title, time, tags, text, filename = utils.read_pdfa(tmp_path)
     # Save to final path
-    filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
     path = utils.archive(filename)
     if os.path.isfile(path):
         logger.error(f"Can't add pdf {path} because it already exists!")
@@ -186,24 +166,30 @@ def on_add():
     return utils.db_add(filename, title, time, tags, text)
 
 
-@server.route("/update", methods=["POST"])
-def on_replace():
-    scans = request.files.getlist("scan")
+@server.route("/update/<_id>", methods=["POST"])
+def on_update(_id):
     pdf = request.files.get("pdf")
-    post = request.files.get("post")
-    if pdf is None or post is None:
-        return "Need at least post and pdf file!", 400
-    # Check if post is correct json file
-    try:
-        post = json.load(post)
-    except:
-        return "Errors in submitted post file", 400
-    if not "_id" in post:
-        return "Need id for replacing", 400
-    txt, code = utils.db_delete(post["_id"])
+    if pdf is None:
+        return "No pdf transmitted!", 400
+    tmp_path = "/tmp/newdoc.pdf"
+    pdf.save(tmp_path)
+    # Extract data
+    title, time, tags, text, filename = utils.read_pdfa(tmp_path)
+
+    # Remove old files and db entry
+    txt, code = utils.db_delete(_id)
     if code != 201:
         return txt, code
-    return utils.db_add(post, pdf, scans)
+
+    # Save to final path
+    path = utils.archive(filename)
+    if os.path.isfile(path):
+        logger.error(f"Can't add pdf {path} because it already exists!")
+        return "Document already exists!", 409
+    logger.info(f"Saving pdf to {path}")
+    shutil.move(tmp_path, path)
+    # Register doc in db
+    return utils.db_add(filename, title, time, tags, text, _id)
 
 
 @server.route("/remove", methods=["POST"])

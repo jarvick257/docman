@@ -25,8 +25,8 @@ class Push:
         # Prepare post
         url = doc.server_url
         if doc.mode == "update":
-            url += "/update?id={doc._id}"
-        elif doc.mode == "add" or doc.mode == "replace":
+            url += f"/update/{doc._id}"
+        elif doc.mode == "add":
             url += "/add"
         files = [("pdf", open(doc.pdf, "rb"))]
         print(files)
