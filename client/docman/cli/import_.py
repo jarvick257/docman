@@ -41,7 +41,8 @@ class Import:
         except:
             doc.ocr = None
         target = os.path.join(doc.wd, os.path.basename(path))
-        shutil.copy(path, target)
+        if path != target:
+            shutil.copy(path, target)
         doc.pdf = target
         doc.save()
 

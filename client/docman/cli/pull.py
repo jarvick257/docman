@@ -17,10 +17,16 @@ class Pull:
             default=".",
             help="specify download directory (default: current directory)",
         )
+        parser.add_argument(
+            "--keep_id",
+            action="store_true",
+            help="Use <id>.pdf scheme instead of <date>_<title>.pdf",
+        )
+
         parser.set_defaults(function=cls.run)
 
     @classmethod
-    def run(cls, doc, _id, output=".", **kwargs):
+    def run(cls, doc, _id, output=".", keep_id=False, **kwargs):
         import os
         import requests
         from urllib.request import urlretrieve
@@ -38,7 +44,10 @@ class Pull:
         meta = response.json()[_id]
 
         url = f"{url}/pdf/{meta['pdf']}"
-        path = os.path.join(output, meta["pdf"])
+        if not keep_id:
+            path = os.path.join(output, meta["pdf"])
+        else:
+            path = os.path.join(output, meta["_id"] + ".pdf")
         urlretrieve(url, filename=path)
         print(path)
         return 0

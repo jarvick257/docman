@@ -22,6 +22,7 @@ class Checkout:
 
         from docman import Document
         from .pull import Pull
+        from .import_ import Import
 
         # don't overwrite existing document
         if doc.is_wip():
@@ -33,9 +34,9 @@ class Checkout:
             return 1
 
         # Load pdf/a
-        Pull.run(doc, _id=_id, output=doc.wd)
+        Pull.run(doc, _id=_id, output=doc.wd, keep_id=True)
 
         # Load metadata
-        # Import.run(doc)
+        Import.run(doc, os.path.join(doc.wd, _id + ".pdf"))
 
         return 0
