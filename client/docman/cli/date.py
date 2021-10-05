@@ -29,8 +29,11 @@ class Date:
             # new_date = str(dt.date.fromisoformat(new_date))
             new_date = dt.datetime.strptime(new_date, "%Y-%m-%d")
         except ValueError:
-            print("Date must be in YYYY-MM-DD format.")
-            return 1
+            try:
+                new_date = dt.datetime.strptime(new_date, "%Y%m%d")
+            except ValueError:
+                print("Date must be in YYYY-MM-DD format.")
+                return 1
         doc.date = new_date
         print(doc.date.date())
         doc.save()
