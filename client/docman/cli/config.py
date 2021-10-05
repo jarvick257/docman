@@ -8,7 +8,7 @@ class Config:
         parser.set_defaults(function=cls.run)
 
     @classmethod
-    def run(cls, doc):
+    def run(cls, doc, **kwargs):
         from docman.utils import get_config_path
         import os
 
@@ -18,4 +18,4 @@ class Config:
             print("EDITOR environment variable not set. Falling back to vi.")
             editor = "vi"
         os.system(f"{editor} {get_config_path()}")
-        return None, 0
+        return 0

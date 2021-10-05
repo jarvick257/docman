@@ -5,13 +5,12 @@ class Mode:
             "mode",
             description="Change the edit mode. "
             "You can think of it as 'what are your intentions when pushing to the server?'. "
-            "Do you want to 'add' a new document? "
-            "Do you want to 'update' the metadata (title, tags, text, date) of an existing document or "
-            "do you want to 'replace' an existing document entirely including metadata and all its files?",
+            "Do you want to 'add' a new document or "
+            "Do you want to 'update' an existing document?",
         )
         parser.add_argument(
             "mode",
-            choices=["add", "update", "replace"],
+            choices=["add", "update"],
             help="edit mode",
         )
         parser.add_argument(
@@ -40,6 +39,7 @@ class Mode:
             print(
                 "Error: When choosing a mode other than 'add', an existing document id is required!"
             )
-            return None, 1
+            return 1
+        doc.save()
         print(doc.mode)
-        return doc, 0
+        return 0
