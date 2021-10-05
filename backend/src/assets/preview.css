@@ -18,6 +18,8 @@
     transition: 0.3s;
     color: #fffea4;
     opacity: 0%;
+    overflow: clip;
+    font-size: 1.2rem;
 }
 
 .previewinfo:hover {

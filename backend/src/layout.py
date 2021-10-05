@@ -94,8 +94,8 @@ def _preview_row(matches: list, row: int, n_cols: int):
                             n_clicks=0,
                             children=[
                                 html.Div(className="previewinfo_background"),
-                                html.H4(title, className="previewinfo_title"),
-                                html.H4(match["date"], className="previewinfo_date"),
+                                html.Div(title, className="previewinfo_title"),
+                                html.Div(match["date"], className="previewinfo_date"),
                             ],
                         ),
                     ],
