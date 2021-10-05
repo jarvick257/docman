@@ -23,4 +23,5 @@ class Reset:
         if not hard:
             doc.input_files = sorted(glob.glob(os.path.join(doc.wd, "*.jpg")))
         doc.save()
+        doc.cleanup()
         return 0
