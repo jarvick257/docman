@@ -29,7 +29,6 @@ class Push:
         elif doc.mode == "add":
             url += "/add"
         files = [("pdf", open(doc.pdf, "rb"))]
-        print(files)
         try:
             r = requests.post(url, files=files)
         except:

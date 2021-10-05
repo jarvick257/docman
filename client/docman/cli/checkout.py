@@ -37,7 +37,7 @@ class Checkout:
         Pull.run(doc, _id=_id, output=doc.wd, keep_id=True)
 
         # Load metadata
-        Import.run(doc, os.path.join(doc.wd, _id + ".pdf"))
+        Import.run(doc, [os.path.join(doc.wd, _id + ".pdf")])
 
         # Mark as update
         doc.mode = "update"

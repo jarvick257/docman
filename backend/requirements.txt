@@ -6,4 +6,3 @@ loguru
 pymongo
 PyMuPDF
 Pillow
-pdfrw

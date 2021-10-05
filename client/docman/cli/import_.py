@@ -3,23 +3,17 @@ class Import:
     def add_parser(cls, subparser):
         parser = subparser.add_parser(
             "import",
-            description="Imports an existing PDF/A file into working state",
+            description="Imports one or more PDF, PDF/A or image files into working state",
         )
         parser.add_argument(
-            "path",
-            metavar="pdf",
-            help="Path to PDF/A File",
+            "paths",
+            nargs="+",
+            help="Path to pdf or image file",
         )
         parser.set_defaults(function=cls.run)
 
     @classmethod
-    def run(cls, doc, path, **kwargs):
-        import os
-        from datetime import datetime
-        from pdfrw import PdfReader
-        from subprocess import check_call
-        import shutil
-
+    def run(cls, doc, paths: list, **kwargs):
         if doc.is_wip():
             print(
                 "Refusing to import: Current working directory not empty.\n"
@@ -28,23 +22,51 @@ class Import:
             )
             return 1
 
-        pdf = PdfReader(path)
-        doc.title = pdf.Info.Title.decode().lower().replace(" ", "_")
-        doc.tags = sorted(list(set(pdf.Info.Keywords.decode().split(":"))))
-        date = pdf.Info.CreationDate.decode().split(":")[-1]
-        date = date.replace("'", "")
-        date = datetime.strptime(date, "%Y%m%d%H%M%S%z")
-        doc.date = date
-        try:
-            doc.ocr = os.path.join(doc.wd, "ocr.txt")
-            check_call(["pdftotext", path, doc.ocr])
-        except:
-            doc.ocr = None
+        for path in paths:
+            if path.endswith(".pdf"):
+                cls.import_pdf(doc, path)
+            elif path.split(".")[-1].lower() in ["jpg", "jpeg", "png"]:
+                cls.import_image(doc, path)
+            else:
+                print("Unsupported file format: ", path)
+        doc.save()
+
+    @classmethod
+    def import_pdf(cls, doc, path):
+        import os
+        import fitz
+        import shutil
+        from datetime import datetime
+
+        pdf = fitz.open(path)
+        meta = pdf.metadata
+        doc.title = meta.get("title", None)
+        doc.tags = meta.get("keywords", "").split(":")
+        if "creationDate" in meta:
+            date = meta["creationDate"].split(":")[-1]
+            date = date.replace("'", "")
+            date = datetime.strptime(date, "%Y%m%d%H%M%S%z")
+            doc.date = date
+        text = ""
+        for i in range(pdf.pageCount):
+            text += pdf.loadPage(i).getText("text")
+        text = text.replace("\n", " ").replace("  ", " ").strip()
+        if text != "":
+            ocr = os.path.join(doc.wd, "ocr.txt")
+            with open(ocr, "w") as fp:
+                fp.write(text)
+            doc.ocr = ocr
         target = os.path.join(doc.wd, os.path.basename(path))
         if path != target:
             shutil.copy(path, target)
-        doc.pdf = None
-        doc.input_files = [target]
-        doc.save()
+        doc.input_files.append(target)
 
-        return 0
+    @classmethod
+    def import_image(cls, doc, path):
+        import os
+        import shutil
+
+        target = os.path.join(doc.wd, os.path.basename(path))
+        if path != target:
+            shutil.copy(path, target)
+        doc.input_files.append(target)

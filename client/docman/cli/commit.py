@@ -16,7 +16,7 @@ class Commit:
     def run(cls, doc, redo_ocr=False, **kwargs):
         import os
         import subprocess as sp
-        from pdfrw import PdfReader, PdfWriter
+        import fitz
         from tzlocal import get_localzone
 
         if len(doc.input_files) > 1:
@@ -73,8 +73,11 @@ class Commit:
         t = doc.date.replace(tzinfo=get_localzone())
         t = t.strftime("%Y%m%d%H%M%S%z")
         t = f"{t[:-2]}'{t[-2:]}"
-        trailer = PdfReader(doc.pdf)
-        trailer.Info.CreationDate = f"D:{t}"
-        PdfWriter(doc.pdf, trailer=trailer).write()
+        # patch creation date
+        pdf = fitz.open(doc.pdf)
+        meta = pdf.metadata
+        meta["creationDate"] = f"D:{t}"
+        pdf.set_metadata(meta)
+        pdf.saveIncr()
         doc.save()
         return 0

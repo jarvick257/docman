@@ -5,7 +5,6 @@ from datetime import datetime
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import fitz
-from pdfrw import PdfReader
 import io
 from PIL import Image
 
@@ -150,16 +149,16 @@ def get_thumbnail(thumb_name: str):
 
 
 def read_pdfa(pdf_path):
-    doc = PdfReader(pdf_path)
-    title = doc.Info.Title.decode()
-    tags = doc.Info.Keywords.decode().split(":")
-    time = doc.Info.CreationDate.decode().split(":")[-1]
+    doc = fitz.open(pdf_path).metadata
+    meta = doc.metadata
+    title = meta["title"]
+    tags = meta["keywords"].split(":")
+    time = meta["creationDate"].split(":")[-1]
     time = time.replace("'", "")
     time = datetime.strptime(time, "%Y%m%d%H%M%S%z").replace(tzinfo=None)
     filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
-    try:
-        text = check_output(["pdftotext", pdf_path, "/dev/stdout"])
-        text = text.decode().strip().replace("\n", " ").replace("  ", " ")
-    except:
-        text = None
+    text = ""
+    for i in range(pdf.pageCount):
+        text += pdf.loadPage(i).getText("text")
+    text = text.replace("\n", " ").replace("  ", " ").strip()
     return title, time, tags, text, filename

@@ -1,7 +1,6 @@
 import os
 import json
 from datetime import datetime
-from subprocess import check_output
 from loguru import logger
 import shutil
 
