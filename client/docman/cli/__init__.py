@@ -1,37 +1,39 @@
-from .status import Status
-from .scan import Scan
-from .title import Title
+from .checkout import Checkout
 from .commit import Commit
-from .preview import Preview
 from .config import Config
-from .tag import Tag
-from .reset import Reset
 from .date import Date
+from .import_ import Import
+from .mode import Mode
 from .ocr import Ocr
+from .preview import Preview
+from .pull import Pull
 from .push import Push
 from .query import Query
-from .checkout import Checkout
-from .pull import Pull
+from .reset import Reset
 from .rm import Rm
-from .mode import Mode
+from .scan import Scan
+from .status import Status
+from .tag import Tag
+from .title import Title
 
 COMMANDS = [
-    Status,
-    Scan,
-    Title,
+    Checkout,
     Commit,
-    Preview,
     Config,
-    Tag,
-    Reset,
     Date,
+    Import,
+    Mode,
     Ocr,
+    Preview,
+    Pull,
     Push,
     Query,
-    Checkout,
-    Pull,
+    Reset,
     Rm,
-    Mode,
+    Scan,
+    Status,
+    Tag,
+    Title,
 ]
 
 DEFAULT = Status
