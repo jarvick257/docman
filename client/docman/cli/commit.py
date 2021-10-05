@@ -5,10 +5,15 @@ class Commit:
         parser = subparser.add_parser(
             "commit", description="Combines inputs files into a PDF/A."
         )
+        parser.add_argument(
+            "--redo_ocr",
+            action="store_true",
+            help="Discard detected text and redo ocr",
+        )
         parser.set_defaults(function=cls.run)
 
     @classmethod
-    def run(cls, doc, **kwargs):
+    def run(cls, doc, redo_ocr=False, **kwargs):
         import os
         import subprocess as sp
         from pdfrw import PdfReader, PdfWriter
@@ -51,11 +56,13 @@ class Commit:
             input_file,
             output,
         ]
-        if not doc.ocr:
+        if doc.ocr and not redo_ocr:
+            cmd.append("--skip-text")
+        else:
             doc.ocr = os.path.join(doc.wd, "ocr.txt")
             cmd += ["-l", "deu", "--sidecar", doc.ocr]
-        else:
-            cmd += ["--skip-text"]
+            if redo_ocr:
+                cmd.append("--redo-ocr")
 
         try:
             sp.check_call(cmd)
