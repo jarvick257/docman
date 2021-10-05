@@ -92,8 +92,6 @@ def db_delete(_id_str: str):
         return f"No such document {_id}", 404
     # delete files
     os.remove(archive(doc["pdf"]))
-    for scan in doc["scans"]:
-        os.remove(archive(".scans", scan))
     # delte db entry
     db.delete_one(query)
     return "OK", 201
