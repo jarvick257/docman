@@ -1,10 +1,13 @@
 import os
 import json
+from datetime import datetime
+from loguru import logger
+import shutil
 
 import dash
 from dash.dependencies import Input, Output, State, ALL, MATCH
+from dash import html
 import dash_bootstrap_components as dbc
-import dash_html_components as html
 from dash.exceptions import PreventUpdate
 
 from flask import Flask, request, send_from_directory, jsonify
@@ -64,8 +67,6 @@ def replace_date_on_link(n_clicks):
     caller_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     if caller_id == "" or n_clicks == [] or n_clicks == [0]:
         raise PreventUpdate
-    print("replace_date_link", n_clicks)
-    print("replace_date_link", caller_id)
     return json.loads(caller_id)["date"], json.loads(caller_id)["date"]
 
 
@@ -88,7 +89,6 @@ def update_selection(n_clicks, results, current_selection):
     caller_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     if caller_id == "" or n_clicks == [] or n_clicks == [0]:
         raise PreventUpdate
-    print("CallerID: ", caller_id)
     if caller_id == "results":
         # clear selection on new results
         return None
@@ -134,63 +134,57 @@ def serve_thumbnail(image):
     return send_from_directory(path, image)
 
 
-@server.route("/scan/<image>")
-def serve_scan(image):
-    path = os.path.join(utils.archive(), ".scans")
-    if not os.path.isfile(os.path.join(path, image)):
-        return "Documnet not found!", 404
-    return send_from_directory(path, image)
-
-
 @server.route("/pdf/<document>")
 def serve_pdf(document):
-    if not os.path.isfile(os.path.join(utils.archive(), document)):
+    if not os.path.isfile(utils.archive(document)):
         return "Document not found!", 404
     return send_from_directory(utils.archive(), document)
 
 
 @server.route("/add", methods=["POST"])
 def on_add():
-    scans = request.files.getlist("scan")
     pdf = request.files.get("pdf")
-    post = request.files.get("post")
-    if pdf is None or post is None:
-        return "Need at least post and pdf file!", 400
+    if pdf is None:
+        return "No pdf transmitted!", 400
+    tmp_path = "/tmp/newdoc.pdf"
+    pdf.save(tmp_path)
+    # Extract data
+    title, time, tags, text, filename = utils.read_pdfa(tmp_path)
+    # Save to final path
+    path = utils.archive(filename)
+    if os.path.isfile(path):
+        logger.error(f"Can't add pdf {path} because it already exists!")
+        return "Document already exists!", 409
+    logger.info(f"Saving pdf to {path}")
+    shutil.move(tmp_path, path)
+    # Register doc in db
+    return utils.db_add(filename, title, time, tags, text)
 
-    # Check if post is correct json file
-    try:
-        post = json.load(post)
-    except:
-        return "Errors in submitted post file", 400
-    return utils.db_add(post, pdf, scans)
 
-
-@server.route("/replace", methods=["POST"])
-def on_replace():
-    scans = request.files.getlist("scan")
+@server.route("/update/<_id>", methods=["POST"])
+def on_update(_id):
     pdf = request.files.get("pdf")
-    post = request.files.get("post")
-    if pdf is None or post is None:
-        return "Need at least post and pdf file!", 400
-    # Check if post is correct json file
-    try:
-        post = json.load(post)
-    except:
-        return "Errors in submitted post file", 400
-    if not "_id" in post:
-        return "Need id for replacing", 400
-    txt, code = utils.db_delete(post["_id"])
+    if pdf is None:
+        return "No pdf transmitted!", 400
+    tmp_path = "/tmp/newdoc.pdf"
+    pdf.save(tmp_path)
+    # Extract data
+    title, time, tags, text, filename = utils.read_pdfa(tmp_path)
+
+    # Remove old files and db entry
+    txt, code = utils.db_delete(_id)
     if code != 201:
         return txt, code
-    return utils.db_add(post, pdf, scans)
 
-
-@server.route("/update", methods=["POST"])
-def on_update():
-    post = request.get_json()
-    if not "_id" in post:
-        return "Need id for upating", 400
-    return utils.db_update(post)
+    # Save to final path
+    path = utils.archive(filename)
+    if os.path.isfile(path):
+        logger.error(f"Can't add pdf {path} because it already exists!")
+        return "Document already exists!", 409
+    logger.info(f"Saving pdf to {path}")
+    shutil.move(tmp_path, path)
+    # Register doc in db
+    return utils.db_add(filename, title, time, tags, text, _id)
 
 
 @server.route("/remove", methods=["POST"])
@@ -216,7 +210,6 @@ def on_query():
     if query.get("n_results", -1) > 0:
         # limit matches to first n_results keys
         keys = list(matches.keys())[: int(query["n_results"])]
-        print(keys)
         matches = {k: matches[k] for k in keys}
     return jsonify(matches)
 

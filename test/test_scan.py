@@ -16,12 +16,12 @@ def get_default_doc():
 def test_scan_noarg(capfd):
     doc = get_default_doc()
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    assert doc.scans == []
+    assert doc.input_files == []
     doc, retval = _run(doc, None)
     cmd = f"scancmd {doc.wd}/{timestamp}.jpg"
     assert retval == 0
     assert capfd.readouterr() == (f"echo {cmd}\n{cmd}\n", "")
-    assert doc.scans == [f"{doc.wd}/{timestamp}.jpg"]
+    assert doc.input_files == [f"{doc.wd}/{timestamp}.jpg"]
 
 
 def test_scan_reset(capfd):
@@ -33,7 +33,7 @@ def test_scan_reset(capfd):
 
     cmd = f"scancmd {doc.wd}/{timestamp}.jpg"
     assert retval == 0
-    assert doc.scans == [f"{doc.wd}/{timestamp}.jpg"]
+    assert doc.input_files == [f"{doc.wd}/{timestamp}.jpg"]
     assert doc.pdf == None
     assert doc.ocr == None
     out, err = capfd.readouterr()
@@ -41,8 +41,8 @@ def test_scan_reset(capfd):
     out = out.split("\n")
     assert out[0] == f"echo {cmd}"  # full command
     assert out[1] == f"{cmd}"  # command execution
-    assert out[2] == "Scans changed! Removed existing PDF"  # pdf warning
-    assert out[3] == "Scans changed! Removed existing OCR"  # ocr warning
+    assert out[2] == "Input files changed! Removed existing PDF"  # pdf warning
+    assert out[3] == "Input files changed! Removed existing OCR"  # ocr warning
 
 
 def test_scan_fail_retval(capfd):

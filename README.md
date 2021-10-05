@@ -15,3 +15,4 @@ Docman - a scriptable, git inspired document management system featuring documen
 - [ ] periodic backups: sync documents with remote server periodically
 - [ ] unit tests
 - [ ] https and client authentification
+

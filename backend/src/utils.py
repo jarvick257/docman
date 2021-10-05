@@ -21,8 +21,9 @@ def _connect_db():
     return db["docman"]
 
 
-def archive():
-    return os.environ.get("DOCMAN_ARCHIVE", "/data")
+def archive(*args):
+    path = [os.environ.get("DOCMAN_ARCHIVE", "/data")] + list(args)
+    return os.path.join(*path)
 
 
 def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
@@ -54,39 +55,20 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
     return result
 
 
-def db_add(post: dict, pdf, scans: list):
-    logger.info(f"Adding new document: {post['title']}")
-    if "_id" in post:
-        post["_id"] = ObjectId(post["_id"])
+def db_add(
+    filename: str, title: str, date: datetime, tags: list, text: str, _id: str = None
+):
+    logger.info(f"Adding new document: {title}")
+    post = {
+        "pdf": filename,
+        "title": title,
+        "date": date,
+        "tags": tags,
+        "ocr": text,
+    }
+    if _id:
+        post["_id"] = ObjectId(_id)
 
-    # fromisoformat only available in python3.7
-    # post["date"] = datetime.fromisoformat(post["date"])
-    post["date"] = datetime.strptime(post["date"], "%Y-%m-%d")
-    date_str = post["date"].strftime("%Y%m%d")
-
-    # Save PDF
-    pdf_file = f"{date_str}-{post['title']}.pdf"
-    pdf_path = os.path.join(archive(), pdf_file)
-    if os.path.isfile(pdf_path):
-        logger.error(f"Can't add pdf {pdf_path} because it already exists!")
-        return "Document already exists!", 409
-    pdf.save(pdf_path)
-    post["pdf"] = pdf_file
-
-    # Save scans
-    scan_dir = os.path.join(archive(), ".scans")
-    if not os.path.isdir(scan_dir):
-        os.mkdir(scan_dir)
-    post["scans"] = []
-    for i, scan in enumerate(scans):
-        fmt = "jpg" if "." not in scan.filename else scan.filename.split(".")[-1]
-        scan_file = f"{date_str}-{post['title']}-{i:02d}.{fmt}"
-        scan_path = os.path.join(scan_dir, scan_file)
-        if os.path.isfile(scan_path):
-            logger.error(f"Can't add scan {scan_path} becuase it already exists!")
-            return "Document already exists!", 409
-        scan.save(scan_path)
-        post["scans"].append(scan_file)
     try:
         db = _connect_db()
         db.insert_one(post)
@@ -108,12 +90,10 @@ def db_delete(_id_str: str):
     if doc is None or doc == {}:
         logger.error("Document doesn't exist")
         return f"No such document {_id}", 404
-    # delete files
-    os.remove(os.path.join(archive(), doc["pdf"]))
-    for scan in doc["scans"]:
-        os.remove(os.path.join(archive(), ".scans", scan))
     # delte db entry
     db.delete_one(query)
+    # delete files
+    os.remove(archive(doc["pdf"]))
     return "OK", 201
 
 
@@ -156,7 +136,7 @@ def _create_thumbnail(pdf_path: str, thumb_path: str):
 
 
 def get_thumbnail(thumb_name: str):
-    thumb_dir = os.path.join(archive(), ".thumbs")
+    thumb_dir = archive(".thumbs")
     thumb_path = os.path.join(thumb_dir, thumb_name)
     if not os.path.isfile(thumb_path):
         logger.debug(f"{thumb_path} doesn't exist")
@@ -164,5 +144,21 @@ def get_thumbnail(thumb_name: str):
             os.mkdir(thumb_dir)
         pdf_name = thumb_name.rsplit(".", 1)[0] + ".pdf"
         logger.debug(f"Creating {thumb_name} from {pdf_name}")
-        _create_thumbnail(os.path.join(archive(), pdf_name), thumb_path)
+        _create_thumbnail(archive(pdf_name), thumb_path)
     return thumb_dir, thumb_name
+
+
+def read_pdfa(pdf_path):
+    doc = fitz.open(pdf_path)
+    meta = doc.metadata
+    title = meta["title"]
+    tags = meta["keywords"].split(":")
+    time = meta["creationDate"].split(":")[-1]
+    time = time.replace("'", "")
+    time = datetime.strptime(time, "%Y%m%d%H%M%S%z").replace(tzinfo=None)
+    filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
+    text = ""
+    for i in range(doc.pageCount):
+        text += doc.loadPage(i).getText("text")
+    text = text.replace("\n", " ").replace("  ", " ").strip()
+    return title, time, tags, text, filename

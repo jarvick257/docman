@@ -18,28 +18,28 @@ def args(**kwargs):
 def test_reset(with_test_config):
     # create 'is' state for document
     doc = docman.Document.load({})
-    doc.scans = ["one", "two", "three"]
+    doc.input_files = ["one", "two", "three"]
     doc.tags = ["alpha", "beta"]
     doc.pdf = "some pdf"
     doc.ocr = "some ocr"
 
-    # create "actual" scans
+    # create "actual" input files
     os.mkdir(doc.wd)
     for f in ["four.jpg", "five.jpg", "six.png"]:
         with open(os.path.join(doc.wd, f), "w") as fp:
             fp.write("")
 
-    # soft reset will reset all meta data and check for scans
+    # soft reset will reset all meta data and check for input files
     doc, retval = _run(doc, args(hard=False))
     assert retval == 0
-    assert doc.scans == sorted(
+    assert doc.input_files == sorted(
         ["/tmp/test_docman/five.jpg", "/tmp/test_docman/four.jpg"]
     )
     assert doc.tags == []
     assert doc.pdf is None
     assert doc.ocr is None
 
-    # hard reset will also delete scans
+    # hard reset will also delete input files
     doc, retval = _run(doc, args(hard=True))
     assert retval == 0
-    assert doc.scans == []
+    assert doc.input_files == []

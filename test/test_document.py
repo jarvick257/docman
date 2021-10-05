@@ -1,3 +1,4 @@
+import pdb
 import os
 import json
 import datetime as dt
@@ -10,25 +11,23 @@ from testhelpers import with_test_config
 test_meta = dict(
     mode="replace",
     _id="some_id",
-    scans=[1, 2, 3],
+    input_files=[1, 2, 3],
     tags=[4, 5, 6],
     ocr="some ocr",
     pdf="some pdf",
-    date="some date",
+    date=str(dt.date.today()),
     title="some title",
 )
 
 
 def test_document_load_clean(with_test_config):
     doc = docman.Document.load()
-    assert doc.scans == []
     assert doc._id == None
-    assert doc.scans == []
     assert doc.tags == []
     assert doc.ocr == None
     assert doc.pdf == None
     assert doc.title == None
-    assert doc.date == str(dt.date.today())
+    assert dt.datetime.now() - doc.date < dt.timedelta(seconds=0.2)
     assert doc.mode == "add"
     assert doc.wd == "/tmp/test_docman"
     assert doc.path == os.path.join(doc.wd, "meta.json")
@@ -36,11 +35,11 @@ def test_document_load_clean(with_test_config):
     assert doc.to_dict() == dict(
         mode="add",
         _id=None,
-        scans=[],
+        input_files=[],
         tags=[],
         ocr=None,
         pdf=None,
-        date=doc.date,
+        date=str(doc.date.date()),
         title=None,
     )
 
@@ -71,9 +70,6 @@ def test_document_save(with_test_config):
 def test_document_is_wip(with_test_config):
     doc = docman.Document.load()
     assert not doc.is_wip()
-    doc.scans.append(1)
-    assert doc.is_wip()
-    doc.scans = []
     doc.tags.append(1)
     assert doc.is_wip()
     doc.tags = []
