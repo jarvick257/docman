@@ -41,7 +41,7 @@ class Import:
         pdf = fitz.open(path)
         meta = pdf.metadata
         doc.title = meta.get("title", None)
-        doc.tags = meta.get("keywords", "").split(":")
+        doc.tags = [t for t in meta.get("keywords", "").split(":") if t != ""]
         if "creationDate" in meta:
             date = meta["creationDate"].split(":")[-1]
             date = date.replace("'", "")
