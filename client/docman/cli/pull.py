@@ -6,7 +6,8 @@ class Pull:
             description="Downloads document files to local machine (scans or PDFs)",
         )
         parser.add_argument(
-            "id",
+            "_id",
+            metavar="id",
             help="document id",
         )
         parser.add_argument(
@@ -19,10 +20,10 @@ class Pull:
         parser.set_defaults(function=cls.run)
 
     @classmethod
-    def run(cls, doc, _id, output="."):
+    def run(cls, doc, _id, output=".", **kwargs):
         import os
         import requests
-        import urllib.request
+        from urllib.request import urlretrieve
 
         # get document info
         url = doc.server_url
@@ -30,15 +31,14 @@ class Pull:
             response = requests.get(f"{url}/query", json=dict(id=_id))
         except:
             print(f"Failed to connect to {url}/query")
-            return None, 1
+            return 1
         if response.status_code != 200 or response.json() == {}:
             print(f"Didn't find any document for id {_id}")
-            return None, 1
+            return 1
         meta = response.json()[_id]
 
-        # Include PDF
         url = f"{url}/pdf/{meta['pdf']}"
-        path = os.path.join(args.output, meta["pdf"])
-        print(f"Downloading {path}")
-        urllib.request.urlretrieve(url, filename=path)
-        return None, 0
+        path = os.path.join(output, meta["pdf"])
+        urlretrieve(url, filename=path)
+        print(path)
+        return 0

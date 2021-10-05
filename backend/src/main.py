@@ -142,7 +142,7 @@ def serve_thumbnail(image):
 
 @server.route("/scan/<image>")
 def serve_scan(image):
-    path = os.path.join(utils.archive(), ".scans")
+    path = utils.archive(".scans")
     if not os.path.isfile(os.path.join(path, image)):
         return "Document not found!", 404
     return send_from_directory(path, image)
@@ -150,7 +150,7 @@ def serve_scan(image):
 
 @server.route("/pdf/<document>")
 def serve_pdf(document):
-    if not os.path.isfile(os.path.join(utils.archive(), document)):
+    if not os.path.isfile(utils.archive(document)):
         return "Document not found!", 404
     return send_from_directory(utils.archive(), document)
 
@@ -160,7 +160,7 @@ def on_add():
     pdf = request.files.get("pdf")
     if pdf is None:
         return "No pdf transmitted!", 400
-    tmp_path = "/tmp/combined.pdf"
+    tmp_path = "/tmp/newdoc.pdf"
     pdf.save(tmp_path)
     # Extract data
     doc = PdfReader(tmp_path)
@@ -176,7 +176,7 @@ def on_add():
     text = text.decode().strip().replace("\n", " ").replace("  ", " ")
     # Save to final path
     filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
-    path = os.path.join(utils.archive(), filename)
+    path = utils.archive(filename)
     if os.path.isfile(path):
         logger.error(f"Can't add pdf {path} because it already exists!")
         return "Document already exists!", 409

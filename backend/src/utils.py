@@ -21,8 +21,9 @@ def _connect_db():
     return db["docman"]
 
 
-def archive():
-    return os.environ.get("DOCMAN_ARCHIVE", "/data")
+def archive(*args):
+    path = [os.environ.get("DOCMAN_ARCHIVE", "/data")] + list(args)
+    return os.path.join(*path)
 
 
 def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
@@ -55,18 +56,18 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
 
 
 def db_add(
-    pdf_path: str, title: str, date: datetime, tags: list, text: str, _id: str = None
+    filename: str, title: str, date: datetime, tags: list, text: str, _id: str = None
 ):
     logger.info(f"Adding new document: {title}")
     post = {
-        "pdf": pdf_path,
+        "pdf": filename,
         "title": title,
         "date": date,
         "tags": tags,
         "ocr": text,
     }
-    if _id is not None:
-        post["_id"] = ObjectId("_id")
+    if _id:
+        post["_id"] = ObjectId(_id)
 
     try:
         db = _connect_db()
@@ -90,9 +91,9 @@ def db_delete(_id_str: str):
         logger.error("Document doesn't exist")
         return f"No such document {_id}", 404
     # delete files
-    os.remove(os.path.join(archive(), doc["pdf"]))
+    os.remove(archive(doc["pdf"]))
     for scan in doc["scans"]:
-        os.remove(os.path.join(archive(), ".scans", scan))
+        os.remove(archive(".scans", scan))
     # delte db entry
     db.delete_one(query)
     return "OK", 201
@@ -137,7 +138,7 @@ def _create_thumbnail(pdf_path: str, thumb_path: str):
 
 
 def get_thumbnail(thumb_name: str):
-    thumb_dir = os.path.join(archive(), ".thumbs")
+    thumb_dir = archive(".thumbs")
     thumb_path = os.path.join(thumb_dir, thumb_name)
     if not os.path.isfile(thumb_path):
         logger.debug(f"{thumb_path} doesn't exist")
@@ -145,5 +146,5 @@ def get_thumbnail(thumb_name: str):
             os.mkdir(thumb_dir)
         pdf_name = thumb_name.rsplit(".", 1)[0] + ".pdf"
         logger.debug(f"Creating {thumb_name} from {pdf_name}")
-        _create_thumbnail(os.path.join(archive(), pdf_name), thumb_path)
+        _create_thumbnail(archive(pdf_name), thumb_path)
     return thumb_dir, thumb_name

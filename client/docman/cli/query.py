@@ -48,7 +48,7 @@ class Query:
         parser.add_argument(
             "-Q",
             "--no_header",
-            action="store_false",
+            action="store_true",
             help="don't print table header",
         )
         parser.add_argument(
@@ -69,8 +69,9 @@ class Query:
         date_from=None,
         date_until=None,
         short=False,
-        no_header=True,
+        no_header=False,
         raw=False,
+        **kwargs,
     ):
         import requests
         import datetime as dt
@@ -90,7 +91,7 @@ class Query:
                 )
         except ValueError:
             print("Date must be in YYYY-MM-DD format.")
-            return None, 1
+            return 1
         if _id is not None:
             query["id"] = _id.strip()
         if tags is not None:
@@ -106,22 +107,22 @@ class Query:
             response = requests.get(url, json=query)
         except:
             print(f"Failed to connect to {url}")
-            return None, 1
+            return 1
         if response.status_code != 200:
             print(f"Failed to connect to backend! (code {response.status_code})")
             # print(response.text)
-            return None, 1
+            return 1
 
         # Print
         # print only IDs
         if short:
             print("\n".join(list(response.json().keys())))
-            return None, 0
+            return 0
 
         # print raw json
         if raw:
             print(response.text)
-            return None, 0
+            return 0
 
         # print full table
         import pandas as pd
@@ -129,10 +130,10 @@ class Query:
         df = pd.DataFrame(response.json().values())
         if df.empty:
             print("No results")
-            return None, 0
+            return 0
         df["tags"] = df["tags"].apply(lambda x: ",".join(x))
         df["title"] = df["title"].apply(
             lambda x: " ".join([w.capitalize() for w in x.split("_")])
         )
         print(df[["_id", "date", "title", "tags"]].to_string(header=not no_header))
-        return None, 0
+        return 0

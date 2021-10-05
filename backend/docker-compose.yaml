@@ -7,11 +7,9 @@ services:
         container_name: docman
         restart: unless-stopped
         volumes:
-            - /mnt/docman:/data
+            - /tmp/backend:/data
         ports:
             - 8123:80
         environment:
             - DOCMAN_DEBUG=TRUE
-
-
 
