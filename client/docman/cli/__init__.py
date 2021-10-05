@@ -1,7 +1,7 @@
 from .status import Status
 from .scan import Scan
 from .title import Title
-from .pdf import Pdf
+from .commit import Commit
 from .preview import Preview
 from .config import Config
 from .tag import Tag
@@ -19,7 +19,7 @@ COMMANDS = [
     Status,
     Scan,
     Title,
-    Pdf,
+    Commit,
     Preview,
     Config,
     Tag,

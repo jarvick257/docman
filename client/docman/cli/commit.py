@@ -1,9 +1,9 @@
-class Pdf:
+class Commit:
     @classmethod
     def add_parser(cls, subparser):
         # only needed for --help
         parser = subparser.add_parser(
-            "pdf", description="Combines inputs files into a PDFa."
+            "commit", description="Combines inputs files into a PDFa."
         )
         parser.set_defaults(function=cls.run)
 
@@ -59,6 +59,7 @@ class Pdf:
         except:
             print(f"OcrMyPdf Failed!")
             return None, 1
+        doc.ocr = ocr
         doc.pdf = output
         t = doc.date.replace(tzinfo=get_localzone())
         t = t.strftime("%Y%m%d%H%M%S%z")
