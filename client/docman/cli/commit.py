@@ -27,7 +27,7 @@ class Commit:
             print("Creating single pdf from input files")
             inputs = " ".join(doc.input_files)
             output = os.path.join(doc.wd, "combined.pdf")
-            cmd = ["img2pdf", "--pagesize", "A4", "-o", output] + doc.input_files
+            cmd = ["img2pdf", "--imgsize", "A4", "-o", output] + doc.input_files
             try:
                 sp.check_call(cmd)
             except sp.CalledProcessError as e:
@@ -53,8 +53,6 @@ class Commit:
             ":".join(doc.tags),
             "--output-type",
             "pdfa",
-            input_file,
-            output,
         ]
         if doc.ocr and not redo_ocr:
             cmd.append("--skip-text")
@@ -63,8 +61,10 @@ class Commit:
             cmd += ["-l", "deu", "--sidecar", doc.ocr]
             if redo_ocr:
                 cmd.append("--redo-ocr")
+        cmd += [input_file, output]
 
         try:
+            print(cmd)
             sp.check_call(cmd)
         except:
             print(f"OcrMyPdf Failed!")
