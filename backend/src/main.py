@@ -42,7 +42,6 @@ def update_result_store(tags, text, start_date, end_date):
         tags = tags.strip().split(" ")
     matches = utils.db_lookup(tags, text, start_date, end_date)
     print("Matches:", list(matches.keys()))
-    print(matches)
     return matches
 
 
@@ -68,8 +67,6 @@ def replace_date_on_link(n_clicks):
     caller_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     if caller_id == "" or n_clicks == [] or n_clicks == [0]:
         raise PreventUpdate
-    print("replace_date_link", n_clicks)
-    print("replace_date_link", caller_id)
     return json.loads(caller_id)["date"], json.loads(caller_id)["date"]
 
 
@@ -92,7 +89,6 @@ def update_selection(n_clicks, results, current_selection):
     caller_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     if caller_id == "" or n_clicks == [] or n_clicks == [0]:
         raise PreventUpdate
-    print("CallerID: ", caller_id)
     if caller_id == "results":
         # clear selection on new results
         return None
@@ -214,7 +210,6 @@ def on_query():
     if query.get("n_results", -1) > 0:
         # limit matches to first n_results keys
         keys = list(matches.keys())[: int(query["n_results"])]
-        print(keys)
         matches = {k: matches[k] for k in keys}
     return jsonify(matches)
 

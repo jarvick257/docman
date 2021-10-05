@@ -149,7 +149,7 @@ def get_thumbnail(thumb_name: str):
 
 
 def read_pdfa(pdf_path):
-    doc = fitz.open(pdf_path).metadata
+    doc = fitz.open(pdf_path)
     meta = doc.metadata
     title = meta["title"]
     tags = meta["keywords"].split(":")
@@ -158,7 +158,7 @@ def read_pdfa(pdf_path):
     time = datetime.strptime(time, "%Y%m%d%H%M%S%z").replace(tzinfo=None)
     filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
     text = ""
-    for i in range(pdf.pageCount):
-        text += pdf.loadPage(i).getText("text")
+    for i in range(doc.pageCount):
+        text += doc.loadPage(i).getText("text")
     text = text.replace("\n", " ").replace("  ", " ").strip()
     return title, time, tags, text, filename

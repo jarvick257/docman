@@ -80,10 +80,26 @@ def _preview_row(matches: list, row: int, n_cols: int):
     thumbnails = []
     for match in matches:
         url = f"/thumb/{match['pdf']}".rsplit(".", 1)[0] + ".jpg"
+        title = " ".join([w.capitalize() for w in match["title"].split("_")])
         prev_id = {"type": "preview", "_id": match["_id"], "row": row}
         thumbnails.append(
             dbc.Col(
-                html.Img(src=url, id=prev_id, n_clicks=0, style={"width": "100%"}),
+                html.Div(
+                    className="preview",
+                    children=[
+                        html.Img(src=url, style={"width": "100%"}),
+                        html.Div(
+                            className="previewinfo",
+                            id=prev_id,
+                            n_clicks=0,
+                            children=[
+                                html.Div(className="previewinfo_background"),
+                                html.H4(title, className="previewinfo_title"),
+                                html.H4(match["date"], className="previewinfo_date"),
+                            ],
+                        ),
+                    ],
+                ),
                 width=12 // n_cols,
             )
         )
@@ -115,7 +131,7 @@ def show_document(match: dict):
         style={
             "resize": "vertical",
             "overflow-y": "hidden",
-            "height": "500px",
+            "height": "1000px",
             "min-height": "100px",
         },
     )
