@@ -45,7 +45,10 @@ class Import:
         if "creationDate" in meta:
             date = meta["creationDate"].split(":")[-1]
             date = date.replace("'", "")
-            date = datetime.strptime(date, "%Y%m%d%H%M%S%z")
+            try:
+                date = datetime.strptime(date, "%Y%m%d%H%M%S%z")
+            except ValueError:
+                date = datetime.strptime(date, "%Y%m%d%H%M%S")
             doc.date = date
         text = ""
         for i in range(pdf.pageCount):

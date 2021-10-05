@@ -33,7 +33,7 @@ class Tag:
             if tag in doctags:
                 doctags.remove(tag)
         for tag in tags + add:
-            doctags.add(tag.lower().replace(" ", "_"))
+            doctags.add(tag.lower().replace(" ", "_").strip())
         doc.tags = sorted(list(doctags))
         doc.save()
         print(" ".join(doc.tags))

@@ -19,7 +19,10 @@ class Commit:
         import fitz
         from tzlocal import get_localzone
 
-        if len(doc.input_files) > 1:
+        if len(doc.input_files) == 1 and doc.input_files[0].endswith(".pdf"):
+            # pdf as input
+            input_file = doc.input_files[0]
+        elif len(doc.input_files) != 0:
             # Convert/combine image files to pdf first
             print("Creating single pdf from input files")
             inputs = " ".join(doc.input_files)
@@ -34,9 +37,6 @@ class Commit:
                 print(f"{' '.join(cmd)} failed!")
                 return 1
             input_file = output
-        elif len(doc.input_files) == 1 and doc.input_files[0].endswith(".pdf"):
-            # pdf as input
-            input_file = doc.input_files[0]
         else:
             print("Unsupported input!")
             print("Must have either multiple image files or a single pdf as input.")
