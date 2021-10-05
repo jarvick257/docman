@@ -3,7 +3,7 @@ class Commit:
     def add_parser(cls, subparser):
         # only needed for --help
         parser = subparser.add_parser(
-            "commit", description="Combines inputs files into a PDFa."
+            "commit", description="Combines inputs files into a PDF/A."
         )
         parser.set_defaults(function=cls.run)
 
@@ -37,7 +37,7 @@ class Commit:
 
         print("Calling OcrMyPdf")
 
-        output = os.path.join(doc.wd, "combined.pdfa")
+        output = os.path.join(doc.wd, "combined.pdf")
         ocr = os.path.join(doc.wd, "ocr.txt")
         cmd = [
             "ocrmypdf",

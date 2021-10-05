@@ -1,5 +1,4 @@
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 
@@ -111,44 +110,58 @@ def update_preview_grid(matches: list):
 
 def show_document(match: dict):
     url = f"/pdf/{match['pdf']}"
-    iframe = html.Iframe(src=url, style={"width": "100%", "height": "100%"})
-    text = [
-        html.H3(match["title"].replace("_", " ")),
-        html.H4(
-            html.A(
-                match["date"],
-                id={"type": "link_date", "date": match["date"]},
+    iframe = dbc.Row(
+        dbc.Col(html.Iframe(src=url, style={"width": "100%", "height": "100%"})),
+        style={
+            "resize": "vertical",
+            "overflow-y": "hidden",
+            "height": "500px",
+            "min-height": "100px",
+        },
+    )
+    title = match["title"].replace("_", " ")
+    title = " ".join([w.capitalize() for w in title.split()])
+    title = dbc.Row(dbc.Col(html.H3(title)))
+    date = html.A(
+        match["date"],
+        id={"type": "link_date", "date": match["date"]},
+        href="#",
+        n_clicks=0,
+        style={"text-decoration": "none", "color": "inherit"},
+    )
+    tags = html.P(
+        [
+            dbc.Badge(
+                tag,
+                id={"type": "link_tag", "tag": tag},
                 href="#",
                 n_clicks=0,
-                style={"text-decoration": "none", "color": "inherit"},
+                color="primary",
+                className="mr-1",
             )
-        ),
-        html.P(
-            [
-                dbc.Badge(
-                    tag,
-                    id={"type": "link_tag", "tag": tag},
-                    href="#",
-                    n_clicks=0,
-                    color="primary",
-                    className="mr-1",
-                )
-                for tag in match["tags"]
-            ]
-        ),
-        html.P(match["ocr"]),
-    ]
-    return dbc.Row([dbc.Col(text, width=4), dbc.Col(iframe)])
-
-
-layout = html.Div(
-    dbc.Container(
-        [
-            dcc.Store("results", data={}),
-            dcc.Store("selection", data=None),
-            _title_row(),
-            _input_row(),
-            _output_row(),
+            for tag in match["tags"]
         ]
     )
+    data = dbc.Table(
+        [
+            html.Tbody(
+                [
+                    html.Tr([html.Td("Date"), html.Td(date)]),
+                    html.Tr([html.Td("Tags"), html.Td(tags)]),
+                ]
+            )
+        ],
+        striped=True,
+    )
+    return dbc.Row([dbc.Col([title, data], width=4), dbc.Col(iframe)])
+
+
+layout = dbc.Container(
+    [
+        dcc.Store("results", data={}),
+        dcc.Store("selection", data=None),
+        _title_row(),
+        _input_row(),
+        _output_row(),
+    ]
 )

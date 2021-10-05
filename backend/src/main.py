@@ -1,16 +1,21 @@
 import os
 import json
+from datetime import datetime
+from subprocess import check_output
+from loguru import logger
+import shutil
 
 import dash
 from dash.dependencies import Input, Output, State, ALL, MATCH
+from dash import html
 import dash_bootstrap_components as dbc
-import dash_html_components as html
 from dash.exceptions import PreventUpdate
 
 from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
 from layout import layout, update_preview_grid, show_document
+from pdfrw import PdfReader
 import utils
 
 server = Flask("Docman")
@@ -39,6 +44,7 @@ def update_result_store(tags, text, start_date, end_date):
         tags = tags.strip().split(" ")
     matches = utils.db_lookup(tags, text, start_date, end_date)
     print("Matches:", list(matches.keys()))
+    print(matches)
     return matches
 
 
@@ -151,21 +157,36 @@ def serve_pdf(document):
 
 @server.route("/add", methods=["POST"])
 def on_add():
-    scans = request.files.getlist("scan")
     pdf = request.files.get("pdf")
-    post = request.files.get("post")
-    if pdf is None or post is None:
-        return "Need at least post and pdf file!", 400
-
-    # Check if post is correct json file
+    if pdf is None:
+        return "No pdf transmitted!", 400
+    tmp_path = "/tmp/combined.pdf"
+    pdf.save(tmp_path)
+    # Extract data
+    doc = PdfReader(tmp_path)
+    title = doc.Info.Title.decode()
+    tags = doc.Info.Keywords.decode().split(":")
+    time = doc.Info.CreationDate.decode().split(":")[-1]
+    time = time.replace("'", "")
+    time = datetime.strptime(time, "%Y%m%d%H%M%S%z").replace(tzinfo=None)
     try:
-        post = json.load(post)
+        text = check_output(["pdftotext", tmp_path, "/dev/stdout"])
     except:
-        return "Errors in submitted post file", 400
-    return utils.db_add(post, pdf, scans)
+        return "Failed to check text!", 500
+    text = text.decode().strip().replace("\n", " ").replace("  ", " ")
+    # Save to final path
+    filename = f"{time.date().strftime('%Y%m%d')}_{title}.pdf"
+    path = os.path.join(utils.archive(), filename)
+    if os.path.isfile(path):
+        logger.error(f"Can't add pdf {path} because it already exists!")
+        return "Document already exists!", 409
+    logger.info(f"Saving pdf to {path}")
+    shutil.move(tmp_path, path)
+    # Register doc in db
+    return utils.db_add(filename, title, time, tags, text)
 
 
-@server.route("/replace", methods=["POST"])
+@server.route("/update", methods=["POST"])
 def on_replace():
     scans = request.files.getlist("scan")
     pdf = request.files.get("pdf")
@@ -183,14 +204,6 @@ def on_replace():
     if code != 201:
         return txt, code
     return utils.db_add(post, pdf, scans)
-
-
-@server.route("/update", methods=["POST"])
-def on_update():
-    post = request.get_json()
-    if not "_id" in post:
-        return "Need id for upating", 400
-    return utils.db_update(post)
 
 
 @server.route("/remove", methods=["POST"])

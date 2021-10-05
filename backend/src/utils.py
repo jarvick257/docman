@@ -54,39 +54,20 @@ def db_lookup(tags=None, text=None, date_from=None, date_until=None, _id=None):
     return result
 
 
-def db_add(post: dict, pdf, scans: list):
-    logger.info(f"Adding new document: {post['title']}")
-    if "_id" in post:
-        post["_id"] = ObjectId(post["_id"])
+def db_add(
+    pdf_path: str, title: str, date: datetime, tags: list, text: str, _id: str = None
+):
+    logger.info(f"Adding new document: {title}")
+    post = {
+        "pdf": pdf_path,
+        "title": title,
+        "date": date,
+        "tags": tags,
+        "ocr": text,
+    }
+    if _id is not None:
+        post["_id"] = ObjectId("_id")
 
-    # fromisoformat only available in python3.7
-    # post["date"] = datetime.fromisoformat(post["date"])
-    post["date"] = datetime.strptime(post["date"], "%Y-%m-%d")
-    date_str = post["date"].strftime("%Y%m%d")
-
-    # Save PDF
-    pdf_file = f"{date_str}-{post['title']}.pdf"
-    pdf_path = os.path.join(archive(), pdf_file)
-    if os.path.isfile(pdf_path):
-        logger.error(f"Can't add pdf {pdf_path} because it already exists!")
-        return "Document already exists!", 409
-    pdf.save(pdf_path)
-    post["pdf"] = pdf_file
-
-    # Save scans
-    scan_dir = os.path.join(archive(), ".scans")
-    if not os.path.isdir(scan_dir):
-        os.mkdir(scan_dir)
-    post["scans"] = []
-    for i, scan in enumerate(scans):
-        fmt = "jpg" if "." not in scan.filename else scan.filename.split(".")[-1]
-        scan_file = f"{date_str}-{post['title']}-{i:02d}.{fmt}"
-        scan_path = os.path.join(scan_dir, scan_file)
-        if os.path.isfile(scan_path):
-            logger.error(f"Can't add scan {scan_path} becuase it already exists!")
-            return "Document already exists!", 409
-        scan.save(scan_path)
-        post["scans"].append(scan_file)
     try:
         db = _connect_db()
         db.insert_one(post)

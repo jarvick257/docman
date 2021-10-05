@@ -3,5 +3,9 @@
 }
 
 .DateInput {
-    width: 136.5px
+    width: 40%
+}
+
+.DateRangePickerInput_arrow {
+    width: 10%
 }
